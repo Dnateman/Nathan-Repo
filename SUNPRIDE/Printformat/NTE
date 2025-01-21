@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <main style="padding: 3% 5%;">
+        <header>
+            <div style="border-bottom: 2px solid black; display:flex; justify-content:space-between;">
+                <div>
+                    <img src="https://res.cloudinary.com/do1xgqgpg/image/upload/v1728359550/ecumct0uxvaebswj1g18.png" alt="Logo" style="width: 200px; margin-left:10px;">
+                </div>
+                <div style="text-align: right; font-family: 'Times New Roman', Times, serif;">
+                    <p style="text-transform: uppercase; font-weight:bold; font-size:15px;">notice to explain</p>
+                    <p style="text-transform: uppercase;">{{doc.name}}</p>
+                </div>
+            </div>
+        </header>
+
+        <section style="border-bottom: 1px solid black;">
+            <table>
+                <tr>
+                    <td style="text-transform: uppercase;">Date:</td>
+                    <td>{{ frappe.utils.formatdate(doc.posting_date, 'MMMM dd, yyyy')}}</td>
+                </tr>
+                <tr>
+                    <td style="text-transform: uppercase;">employee name:</td>
+                    <td>{{doc.employee_name}}</td>
+                </tr>
+                <tr>
+                    <td style="text-transform: uppercase;">employee no.:</td>
+                    <td>{{doc.employee}}</td>
+                </tr>
+                <tr>
+                    <td style="text-transform: uppercase;">position:</td>
+                    <td>{{doc.position_title}}</td>
+                </tr>
+                <tr>
+                    <td style="text-transform: uppercase;">division and department:</td>
+                    <td>{{doc.division}} and {{doc.department}}</td>
+                </tr>
+            </table>
+        </section>
+        <section>
+            <br>
+            <p>On {% set posting_date = frappe.db.get_value('Incident Report', doc.incident_report, 'posting_date') %}{{ frappe.utils.formatdate(posting_date, 'MMMM dd, yyyy')}}, HR Department received an incident report from {{ doc.division}}, alleging the following:</p>
+            <p style="padding: 3%;">
+                {{doc.details_of_violation}}
+            </p>
+        </section>
+
+        <section>
+            <p>The aforesaid acts are possible violations of the corresponding provisions in our Code of Conduct to wit:</p>
+
+            <p>Provision</p>
+            <table style="border:1px solid black; border-collapse:collapse;">
+                <tr>
+                    <td style="border:1px solid black; text-transform: uppercase; text-align: center; font-weight:bold;">
+                        Offense
+                    </td>
+                    <td style="border:1px solid black; text-transform: uppercase; text-align: center; font-weight:bold;">
+                        1st Commission
+                    </td>
+                    <td style="border:1px solid black; text-transform: uppercase; text-align: center; font-weight:bold;">2nd Commission</td>
+                    <td style="border:1px solid black; text-transform: uppercase; text-align: center; font-weight:bold;">3rd Commission</td>
+                    <td style="border:1px solid black; text-transform: uppercase; text-align: center; font-weight:bold;">4th Commission</td>
+                    <td style="border:1px solid black; text-transform: uppercase; text-align: center; font-weight:bold;">5th Commission</td>
+                    <td style="border:1px solid black; text-transform: uppercase; text-align: center; font-weight:bold;">Category</td>
+                </tr>
+                {% for m in doc.multiple_offense_table %}
+                <tr>
+                    <td style="border:1px solid black;">{{m.offense_data}}</td>
+                    <td style="border:1px solid black;">{% if m['1st_offense'] != None %}{{m['1st_offense']}}{% endif %}</td>
+                    <td style="border:1px solid black;">{% if m['2nd_offense'] != None %}{{m['2nd_offense']}}{% endif %}</td>
+                    <td style="border:1px solid black;">{% if m['3rd_offense'] != None %}{{m['3rd_offense']}}{% endif %}</td>
+                    <td style="border:1px solid black;">{% if m['4th_offense'] != None %}{{m['4th_offense']}}{% endif %}</td>
+                    <td style="border:1px solid black;">{% if m['5th_offense'] != None %}{{m['5th_offense']}}{% endif %}</td>
+                    <td style="border:1px solid black;">{{frappe.db.get_value('Offense', m.offense_id, 'Category')}}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </section>
+        <section style="text-align: justify;">
+            <br>
+            <label for="art"> Labor Code of the Philippines</label>
+            <br>
+            <p id="art">
+                Art. 297. Termination by Employer. An employer may terminate an employment for any of the following cases:
+                
+            </p>
+            <br>
+            <ol type="a" style="line-height: 150%;">
+                <li>Serious misconduct or willful disobedience by the employee of the lawful orders of his employer or representative in connection with his work;</li>
+                <li>Gross and habitual neglect by the employee of his duties;</li>
+                <li>Fraud or willful breach by the employee of the trust reposed in him by his employer or duly authorized representative;</li>
+                <li>Commission of a crime or offense</li>
+            </ol>
+            <p>
+                This letter serves as formal notice for you to explain in writing within five(5) calendar days from receipt of this notice your response on why you should not be given any corrective or disciplinary sanction which may include termination of your employment for the abovementioned allegations.
+            </p>
+            <p>
+                Failure on your part to submit your written explanation after the period stated will be construed as a waiver on your right to be heard and to present evidence/s or supporting documents. As such, your case will be resolved based on available records and evidences.
+            
+            </p>
+            <p>
+                These are for your information and strict compliance.
+            </p>
+        </section>
+
+        <section style="margin-top: 50px;">
+            <table style="line-height: 90%;">
+                <tr>
+                    <td colspan="2"><p style="font-weight:bold;">{% set reports_to = frappe.db.get_value('Employee',doc.employee, 'reports_to_full_name') %}{% if reports_to %}{{reports_to}}{% endif %}</p></td>
+                </tr>
+                <tr><td colspan="2">Immediate Head</td></tr>
+                <tr><td colspan="2" style="height: 20px;"></td></tr>
+                <tr>
+                    <td style="width:400px;"></td>
+                    <td style="width:300px;">Noted By:</td>
+                </tr>
+                <tr><td colspan="2" style="height:40px;"></td></tr>
+                <tr>
+                    <td><b>Name</b></td>
+                    <td><b>Name</b></td>
+                </tr>
+                <tr>
+                    <td>HR Specialist - Employee Relations</td>
+                    <td>Sr. HR & Admin Manager</td>
+                </tr>
+                <tr><td colspan="2" style="height: 40px;"></td></tr>
+                <tr>
+                    <td colspan="2">Received a copy of this notice:</td>
+                </tr>
+            </table>
+           
+            <table>
+                <tr>
+                    <td style="border-bottom:1px solid black; width:180px;">{{doc.employee_name}}</td>
+                    <td></td>
+                    <td style="border-bottom:1px solid black; width:110px;">{{doc.employee}}</td>
+                    <td></td>
+                    <td style="border-bottom:1px solid black; width:120px;"></td>
+                </tr>
+                <tr>
+                    <td>Printed name and signature</td>
+                    <td></td>
+                    <td>Employee No.</td>
+                    <td></td>
+                    <td>Date signed</td>
+                </tr>
+            </table>
+        </section>
+       
+    </main>
+</body>
+</html>

@@ -1,0 +1,508 @@
+//Last Modified By Janella on 1/21/2022 3:42PM
+frappe.ui.form.on("Leave Application", {
+    leave_type: async function(frm) {
+        let leave_type = frm.doc.leave_type;
+        let employee = frm.doc.employee;
+        let target_date = frm.doc.from_date;
+
+        let schedule = await get_as(frm, employee, target_date);
+        let restday = await frappe.db.get_value(
+            "Work Shift",
+            schedule,
+            "is_restday"
+        );
+        let is_restday = restday.message.is_restday;
+
+        let holiday = await frappe.db.get_value(
+            "Holiday",
+            {
+                holiday_date: target_date
+            },
+            "holiday_name"
+        );
+
+        console.log("schedule", schedule);
+        console.log("is_restday", is_restday);
+        console.log("holiday", holiday);
+        
+        
+    },
+    validate: function(frm) {
+        //checkHalfDay(frm);
+        checkDaysFiling(frm);
+        var last_date = getLastDate(frm);
+        //console.log('last_date',last_date)
+        checkDates(frm, last_date);
+    },
+    after_save: function(frm) {
+        if (frm.doc.leave_type == "Sick Leave" && frm.doc.total_leave_days >= 2) {
+            checkAttachment(frm);
+        }
+        if (frm.doc.leave_type == "Leave Application") {
+            getlist_application(frm);
+        }
+    },
+	before_submit: function(frm) {
+		checkTotalDays(frm);
+		checkDOLE(frm);
+
+	}
+});
+
+frappe.ui.form.on("Leave Application Table", {
+    is_first_half: function(frm){
+        checkHalfDay(frm);
+        check1stHalfTicked(frm);
+    },
+    is_second_half: function(frm){
+        checkHalfDay(frm);
+        check2ndHalfTicked(frm);
+    }
+});
+
+async function getlist_application(frm){
+    let data = await frappe.db.get_list("Leave Application", {filters: filters, fields: fields, limit: 1000000});
+    if(data !== undefined){
+        console.log('Existing')
+    }
+    if(__is_local == 1){
+        
+    }
+}
+
+function checkDOLE(frm) {
+	let dole_leave = frm.doc.dole_leave;
+	let user_roles = frappe.user_roles;
+	if (dole_leave == 1 && !user_roles.includes("HR Generalist Approver")) {
+		frappe.throw("<strong>Not Permitted</strong>. Only HR can approve DOLE leave types");
+	}
+}
+
+function checkTotalDays(frm) {
+	let exceeds_15 = frm.doc.exceeds_15;
+	let total_leave_days = frm.doc.total_leave_days;
+	let user_roles = frappe.user_roles;
+	if (exceeds_15 = 1 && total_leave_days > 15 && !user_roles.includes("HR Generalist Approver")) {
+		frappe.throw("<strong>Not Permitted</strong>. SL/EL that exceeds 15 days can only be approved by HR");		
+	}
+}
+
+function checkAttachment(frm) {
+    var type = typeof frm.doc.medical_cert;
+    console.log(type);
+    if (type == "object" || type == "undefined") {
+        frappe.msgprint({
+            title: __("Warning"),
+            indicator: "orange",
+            message: __(
+                "Approval of 2 days or more sick leave requires medical certificate."
+            ),
+        });
+        frappe.validated = false;
+    }
+}
+
+/*function checkHalfDay(frm) {
+    $.each(frm.doc.leave_application_table, function(i, row) {
+        if (row.is_first_half == 1 || row.is_second_half == 1) {
+            row.is_half_day = 1;
+            //checkOBs(frm,row.is_first_half,row.is_second_half)
+        } else {
+            row.is_half_day = 0;
+            //checkOBs(frm,row.is_first_half,row.is_second_half)
+        }
+    });
+}*/
+
+//Automate Halfday checkbox if is first half is ticked
+function checkHalfDay(frm) {
+    $.each(frm.doc.leave_application_table, function(i,row) {
+        console.log(row.is_first_half);
+        if (row.is_first_half == 1 || row.is_second_half == 1 ) {
+            row.is_half_day = 1
+            //checkOBs(frm,row.is_first_half,row.is_second_half) 
+        } else {
+            row.is_half_day = 0
+            //checkOBs(frm,row.is_first_half,row.is_second_half) 
+        }
+        frm.refresh_fields("leave_application_table");
+    })
+}
+
+//only one check half should be selected
+function check1stHalfTicked(frm) {
+    $.each(frm.doc.leave_application_table, function(i,row) {
+        console.log(row.is_first_half);
+        if (row.is_first_half == 1 && row.is_second_half == 1 ) {
+            row.is_first_half = 0
+            frappe.msgprint({
+                title: __('Error Message'),
+                indicator: 'orange',
+                message: __('Second half is already ticked')
+              });
+        } 
+        frm.refresh_fields("leave_application_table");
+    })
+}
+
+//only one check half should be selected
+function check2ndHalfTicked(frm) {
+    $.each(frm.doc.leave_application_table, function(i,row) {
+        console.log(row.is_first_half);
+        if (row.is_first_half == 1 && row.is_second_half == 1 ) {
+            row.is_second_half = 0
+            frappe.msgprint({
+                title: __('Error Message'),
+                indicator: 'orange',
+                message: __('First half is already ticked')
+              });
+        } 
+        frm.refresh_fields("leave_application_table");
+    })
+}
+
+function checkDaysFiling(frm) {
+    var from_date = new Date(frm.doc.from_date);
+    var posting_date = new Date(frm.doc.posting_date);
+    if (frm.doc.leave_type == "Vacation Leave") {
+        var count = 0;
+        for (var d = posting_date; d <= from_date; d.setDate(d.getDate() + 1)) {
+            //console.log(d)
+            if (d.getDay() != 0 && d.getDay() != 0) {
+                count = count + 1;
+            }
+        }
+        //console.log(count)
+        if (frm.doc.total_leave_days <= 2) {
+            if (count <= 2) {
+                frappe.msgprint(
+                    "<strong>Invalid Application</strong>. Filing should be 2 days advanced."
+                );
+                frappe.validated = false;
+            }
+        }
+        if (frm.doc.total_leave_days > 2) {
+            if (count <= 5) {
+                frappe.msgprint(
+                    "<strong>Invalid Application</strong>. Filing should be 5 days advanced."
+                );
+                frappe.validated = false;
+            }
+        }
+    }
+}
+
+function getLastDate(frm) {
+    var last_date = "";
+    frappe.call({
+        method: "frappe.client.get_list",
+        args: {
+            doctype: "Payroll Period",
+            filters: { attendance_to: ["<", frm.doc.posting_date], is_special: 0 },
+            fields: ["name", "attendance_from", "attendance_to", "payroll_date"],
+            order_by: "payroll_date desc",
+        },
+        async: false,
+        callback: function(periods) {
+            var type = typeof periods.message;
+            //console.log(periods.message)
+            if (type != "undefined") {
+                //console.log(periods.message[frm.doc.allowed_cutoffs-1].attendance_from)
+                last_date =
+                    periods.message[frm.doc.allowed_cutoffs - 1].attendance_from;
+            }
+        },
+    });
+    return last_date;
+}
+
+function checkDates(frm, last_date) {
+    var invalid_dates = "";
+    var invalid_count = 0;
+    if (frm.doc.block_late_application == 1 && frm.doc.allowed_cutoffs > 0) {
+        $.each(frm.doc.leave_application_table, function(i, row) {
+            if (row.leave_date < last_date && row.is_excluded == 0) {
+                invalid_dates = invalid_dates + row.leave_date;
+                invalid_count = invalid_count + 1;
+            }
+        });
+    }
+    //console.log(invalid_dates)
+    //console.log(invalid_count)
+    if (invalid_count > 0) {
+        frappe.msgprint(
+            "<strong>Invalid Application</strong>. Only " +
+            frm.doc.allowed_cutoffs +
+            " cutoff/s late filing is allowed."
+        );
+        frappe.validated = false;
+    }
+}
+
+function get_is_restday(frm, name) {
+    return new Promise((resolve) => {
+        let is_restday = 0;
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Work Shift",
+                filters: { name: ["=", name] },
+                fields: ["is_restday"],
+            },
+            async: false,
+            callback: function(data) {
+                var temp = typeof data.message;
+                if (temp != "undefined") {
+                    is_restday = data.message[0].is_restday;
+                }
+            },
+        });
+
+        resolve(is_restday);
+    });
+}
+
+function get_cs_list(frm, target_date) {
+    return new Promise((resolve) => {
+        var cs_list = [];
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Change Schedule Application Table",
+                filters: { target_date: ["=", target_date] },
+                fields: ["new_shift", "parent"],
+            },
+            async: false,
+            callback: function(data) {
+                var temp = typeof data.message;
+                if (temp != "undefined") {
+                    cs_list = data.message;
+                }
+            },
+        });
+
+        resolve(cs_list);
+    });
+}
+
+function get_cs_app(frm, names, employee) {
+    return new Promise((resolve) => {
+        let parents = names.map((item) => item.parent);
+
+        let cs_name = "";
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Change Schedule Application",
+                filters: { name: ["in", parents], employee: employee },
+                fields: ["name", "employee", "workflow_state"],
+                order_by: "approved_on desc",
+            },
+            async: false,
+            callback: function(cs_data) {
+                var temp = typeof cs_data.message;
+                if (temp != "undefined") {
+                    cs_name = cs_data.message[0].name;
+                }
+            },
+        });
+
+        var new_shift = "";
+        if (cs_name != "") {
+            var name_list = names.filter(
+                (data) =>
+                JSON.stringify(data).toLowerCase().indexOf(cs_name.toLowerCase()) !==
+                -1
+            );
+            new_shift = name_list[0].new_shift;
+        }
+
+        resolve(new_shift);
+    });
+}
+
+function get_ws(frm, employee, target_date) {
+    return new Promise((resolve) => {
+        var ws_list = "";
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Work Schedule",
+                filters: { target_date: ["=", target_date], employee: employee },
+                fields: ["work_shift", "target_date"],
+            },
+            async: false,
+            callback: function(ws_data) {
+                var temp = typeof ws_data.message;
+                if (temp != "undefined") {
+                    ws_list = ws_data.message[0].work_shift;
+                }
+            },
+        });
+
+        resolve(ws_list);
+    });
+}
+
+function get_employee_ds(frm, employee) {
+    return new Promise((resolve) => {
+        var default_schedule = "";
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Employee",
+                filters: { name: ["=", employee] },
+                fields: ["default_schedule"],
+            },
+            async: false,
+            callback: function(data) {
+                var temp = typeof data.message;
+                if (temp != "undefined") {
+                    default_schedule = data.message[0].default_schedule;
+                }
+            },
+        });
+
+        resolve(default_schedule);
+    });
+}
+
+function get_ds(frm, default_schedule, target_date) {
+    return new Promise((resolve) => {
+        var def_sched = "";
+        frappe.call({
+            method: "frappe.client.get_list",
+            args: {
+                doctype: "Work Schedule Template",
+                filters: { name: default_schedule },
+                fields: [
+                    "name",
+                    "sunday",
+                    "monday",
+                    "tuesday",
+                    "wednesday",
+                    "thursday",
+                    "friday",
+                    "saturday",
+                ],
+            },
+            async: false,
+            callback: function(default_sched) {
+                var temp = typeof default_sched.message;
+                if (temp != "undefined") {
+                    // console.log(target_date, default_sched.message);
+                    var date = new Date(target_date);
+                    var day = date.getDay();
+                    // console.log(day);
+                    switch (day) {
+                        case 0:
+                            def_sched = default_sched.message[0].sunday;
+                            break;
+                        case 1:
+                            def_sched = default_sched.message[0].monday;
+                            break;
+                        case 2:
+                            def_sched = default_sched.message[0].tuesday;
+                            break;
+                        case 3:
+                            def_sched = default_sched.message[0].wednesday;
+                            break;
+                        case 4:
+                            def_sched = default_sched.message[0].thursday;
+                            break;
+                        case 5:
+                            def_sched = default_sched.message[0].friday;
+                            break;
+                        case 6:
+                            def_sched = default_sched.message[0].saturday;
+                            break;
+                        default:
+                            def_sched = "";
+                    }
+                }
+            },
+        });
+
+        resolve(def_sched);
+    });
+}
+
+function getISOWeek(w, y) {
+    var simple = new Date(y, 0, 1 + (w - 1) * 7);
+    var dow = simple.getDay();
+    var ISOweekStart = simple;
+
+    if (dow <= 4) ISOweekStart.setDate(simple.getDate() - simple.getDay() + 2);
+    else ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay() + 1);
+    const temp = {
+        d: ISOweekStart.getDate(),
+        m: ISOweekStart.getMonth(),
+        y: ISOweekStart.getFullYear(),
+    };
+
+    const numDaysInMonth = new Date(temp.y, temp.m + 1, 0).getDate();
+
+    return Array.from({ length: 7 }, (_) => {
+        if (temp.d > numDaysInMonth) {
+            temp.m += 1;
+            temp.d = 1;
+        }
+        return new Date(temp.y, temp.m, temp.d++).toISOString().slice(0, 10);
+    });
+}
+
+function getWeekYear(mydate) {
+    const date = new Date(mydate);
+    date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
+    return date.getFullYear();
+}
+
+function getWeek(mydate) {
+    const date = new Date(mydate);
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
+    const week1 = new Date(date.getFullYear(), 0, 4);
+    return (
+        1 +
+        Math.round(
+            ((date.getTime() - week1.getTime()) / 86400000 -
+                3 +
+                ((week1.getDay() + 6) % 7)) /
+            7
+        )
+    );
+}
+
+function get_as(frm, employee, target_date) {
+    return new Promise(async(resolve) => {
+        let output = "";
+        let names = await get_cs_list(frm, target_date);
+        let new_shift = await get_cs_app(frm, names, employee);
+        // console.log("Change Schedule", new_shift);
+
+        let work_shift = await get_ws(frm, employee, target_date);
+        // console.log("Work Schedule", work_shift);
+
+        let default_schedule = await get_employee_ds(frm, employee);
+        // console.log("Default Schedule", default_schedule);
+
+        let def_sched = await get_ds(frm, default_schedule, target_date);
+        // console.log("Def Sched", def_sched);
+
+        if (new_shift == "") {
+            if (work_shift == "") {
+                if (def_sched == "") {
+                    output = "No Default Schedule";
+                } else {
+                    output = def_sched;
+                }
+            } else {
+                output = work_shift;
+            }
+        } else {
+            output = new_shift;
+        }
+
+        resolve(output);
+    });
+}

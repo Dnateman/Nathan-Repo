@@ -1,0 +1,394 @@
+// NOTE: this version is currently uploaded in Live Site of RCSI    
+frappe.ui.form.on("Employee", {
+    validate: function(frm,cdt,cdn) {
+	if(frm.doc.__islocal != 1){
+    	$.each(frm.doc.bank_setup, function(i,row) {
+    		var employee = frm.doc.name
+			var bank_account = row.bank_account
+			var type = typeof bank_account
+			if (type != 'undefined') {
+				//console.log('may laman')
+			frappe.call({
+				method: "frappe.client.get_value",
+				args: {
+			    	"doctype": "Bank Setup Table",
+					"filters": {"parent": ["!=",employee], "bank_account": row.bank_account},
+					"fieldname": ["name","parent","bank_account"]
+					},
+			 	callback: function (data) {
+					//console.log(data.message.user_id);
+					var data_type = typeof data.message;
+					if (data_type != 'undefined') {
+						//console.log('may kapareho')
+						frappe.msgprint("Duplicate bank account number to "+data.message.parent);
+	    				frappe.validated = false;
+					}
+				}
+			});
+		}
+	})
+    frm.doc.address_check = 0
+	}
+    },
+    birthday: async function(frm){
+        automateGeneration(frm)
+    },
+    edit_address: function(frm){
+        frm.doc.address_check = 1;
+        frm.refresh_field('address_check')
+    },
+    save_address: function(frm){
+        frm.doc.address_check = 0;
+        frm.refresh_field('address_check')
+        saveAddress(frm)
+    },
+    date_hired: function(frm){
+        monthsInService(frm)
+    },
+    onload:function(frm){
+        if(!frm.doc.address){
+            frm.doc.address = " ";
+        }
+        accessToEmployees(frm)
+        hideFields(frm)
+        //updateGeneration(frm)
+    },
+    location: async function(frm){
+        //getSeries(frm)
+	if(frm.doc.__islocal == 1) {
+       	   getSiteLocation(frm)
+	} 
+    },
+    company: async function(frm){
+        //getSeries(frm)
+    },
+    compute_ir: async function(frm){
+        addToIRTable(frm)
+    }
+})
+//TODO: Get Incident Report
+async function getIncidentReprt(frm) {
+    return incidentReportData = await frappe.db.get_list('Incident Report', {fields: ['*'], limit: 1000000})
+}
+
+
+//TODO: Add to Incident Report Table Process
+async function addToIRTable(frm) {
+    let irData = await getIncidentReprt(frm)
+    let results = []
+
+    console.log(irData)
+    for(let doc of irData){
+        console.log(doc)
+        let table = await frappe.db.get_list("Involved Employees", {filters: {'parent': doc.name, 'employee': frm.doc.name}, fields:['*'], limit: 10000})
+        console.log(table)
+        if(table !== undefined){
+            console.log(table)
+            for(let data in table){
+                
+                results.push(
+                    {
+                        "ir_date_received": doc.date_time_offense,
+                        "incident_report_subject": doc.name,
+                        "rule_violated": doc.offense,
+                        "clause": doc.clause,
+                        "status": doc.docstatus === 1 ? "Closed" : "Ongoing",
+                        "remarks": "",
+                        "decision": doc.decision,
+                        "cost_implication": doc.cost_implication,
+                        "date_closed": "",
+                    }
+                )
+            }
+        }
+        console.log(results)
+        frm.set_value('incident_reports', results)
+        frm.set_value('total_ir', results.length)
+       // console.log('Employee IR', employeeIR)
+    }
+
+}
+
+
+//TODO: Access to employees based on the location
+async function accessToEmployees(frm){
+    const { Employee: cur_user } = frappe.user_defaults;
+    console.log(cur_user)
+
+    let sectionsToHide = [];
+    if(['MAR0600', 'TAY0434'].includes(cur_user)){
+        if(frm.doc.name === 'MAR0600' || frm.doc.name === 'TAY0434'){
+            console.log('hehe')
+        }else{
+        sectionsToHide = ['previous_work_experience','section_break_114','history_in_company','section_break_109','section_break_118','section_break_114','section_break_42','section_break_23','passport','contact_details','section_break_60','section_break_71','section_break_16','section_break_29','educational_qualification'];
+    }
+
+    } else if(['MAR0089', 'MAR0782'].includes(cur_user)) {
+        if(frm.doc.name === 'MAR0089' || frm.doc.name === 'MAR0782'){
+            console.log('hehe')
+        }
+        else{
+        sectionsToHide = ['section_break_15','section_break_14','section_break_1','previous_work_experience','section_break_114','history_in_company','section_break_109','section_break_114','section_break_42','section_break_23','passport','contact_details','section_break_60','section_break_71','section_break_16','section_break_29','educational_qualification']; 
+        }
+    }
+
+    console.log(sectionsToHide)
+    
+    hideSections(frm, sectionsToHide);
+}
+
+function hideSections(frm, sections){
+    sections.forEach(section => {
+        console.log(section)
+        cur_frm.set_df_property(section, "hidden", 1);
+    });
+}
+
+function hideFields(frm){
+	frm.set_df_property('address_html',  'hidden', 1);
+	frm.set_df_property('contact_html',  'hidden', 1);
+}
+
+async function automateGeneration(frm, bday){
+    let alpha = new Date(2012, 12, 31)
+    let cent = new Date(1996, 12, 31)
+    let mile = new Date(1980, 12, 31)
+    let genx = new Date(1964, 12, 31)
+    //let boom = new Date(1945, 12, 31)
+    //let wwii
+    let _alpha = alpha.getFullYear() + "-" + (alpha.getMonth()) + "-" + alpha.getDate();
+    let _cent = cent.getFullYear() + "-" + (cent.getMonth()) + "-" + cent.getDate();
+    let _mile = mile.getFullYear() + "-" + (mile.getMonth()) + "-" + mile.getDate();
+    let _genx = genx.getFullYear() + "-" + (genx.getMonth()) + "-" + genx.getDate();
+    //let _boom = boom.getFullYear() + "-" + (boom.getMonth()) + "-" + boom.getDate();
+    let gen = "";
+    console.log('GEN', _alpha, _cent, _mile, _genx)
+    //console.log(frm.doc.birthday )
+    
+        if(frm.doc.birthday > _alpha ){
+            gen = 'Generation Alpha'
+        } else if (frm.doc.birthday > _cent && frm.doc.birthday <= _alpha){
+            gen = 'Centennials'
+        } else if (frm.doc.birthday > _mile && frm.doc.birthday <= _cent){
+            gen = 'Millenials'
+        } else if (frm.doc.birthday > _genx && frm.doc.birthday <= _mile){
+            gen = 'Generation X'
+        } else /*if (frm.doc.birthday >= _boom)*/{
+            gen = 'Boomers'
+        }
+
+        console.log(gen)
+        frm.doc.generation = gen;
+        // frappe.db.set_value('Employee', frm.doc.name, {
+        //    "generation": gen,
+        // })
+        frm.refresh_field('generation')
+}
+
+
+async function updateGeneration(frm){
+    if(frm.generation){
+        let filters = {"name": frm.doc.name};
+        let data = await frappe.db.get_list("Employee", {filters: filters,fields:["name", 'generation', 'birthday'], limit:1000000});
+	
+        let alpha = new Date(2013, 01, 01)
+        let cent = new Date(1997, 01, 01)
+        let mile = new Date(1981, 01, 01)
+        let genx = new Date(1965, 01, 01)
+        let boom = new Date(1946, 01, 01)
+        //let wwii
+        let _alpha = alpha.getFullYear() + "-" + (alpha.getMonth()) + "-" + alpha.getDate();
+        let _cent = cent.getFullYear()// + "-" + (cent.getMonth()) + "-" + cent.getDate();
+        let _mile = mile.getFullYear() //+ "-" + (mile.getMonth()) + "-" + mile.getDate();
+        let _genx = genx.getFullYear() //+ "-" + (genx.getMonth()) + "-" + genx.getDate();
+        let _boom = boom.getFullYear() //+ "-" + (boom.getMonth()) + "-" + boom.getDate();
+        let gen = "";
+        console.log('GEN', _alpha, _cent, _mile, _genx)
+        //console.log(frm.doc.birthday )
+
+        $.each(data, async function(i,row) {
+	let bdate = new Date(data[i].birthday)
+	let bday = bdate.getFullYear()
+	console.log('bday ', bday, bdate)
+            if(bday >= 2013 ){ //alpha
+                gen = 'Generation Alpha'
+            } else if (bday >= 1997){ //cent
+                gen = 'Centennials'
+            } else if (bday >= 1981){ //_mile
+                gen = 'Millenials'
+            } else if (bday >= 1965){ //_genx
+                gen = 'Generation X'
+            } else /*if (data[i].birthday >= _boom)*/{
+                gen = 'Boomers'
+            }
+
+            frappe.db.set_value('Employee', data[i].name, {
+                "generation": gen,
+            })
+        })
+
+        monthsInService(frm)
+        frm.refresh()
+    }
+}
+
+
+function saveAddress(frm){
+    var address = ""
+    if(frm.doc.blk_lot){ address += frm.doc.blk_lot + " ";}
+    if(frm.doc.street_name){ address += frm.doc.street_name + " ";}
+    if(frm.doc.subdivision){ address += frm.doc.subdivision + " ";}
+    if(frm.doc.barangay){ address += frm.doc.barangay + " ";}
+    if(frm.doc.city){ address += frm.doc.city + " ";}
+    if(frm.doc.province){ address +=  frm.doc.province;}
+    if(frm.doc.region){ address += frm.doc.region + " ";}
+    if(frm.doc.country){ address += frm.country + " ";}
+    if(frm.doc.zip_code){ address += frm.doc.zip_code + " ";}
+
+    console.log(address)
+    frm.doc.address = address;
+    frm.refresh_field("address")
+}
+
+function monthsInService(frm){
+    var start_date = new Date(frm.doc.date_hired)
+    var first_day = new Date(start_date.getFullYear(), start_date.getMonth(), start_date.getDate(), 1);
+    var start_year  = new Date(first_day).getFullYear();
+    var start_month = new Date(first_day).getMonth();
+    var start_day   = new Date(first_day).getDate();
+    let end_day, end_month, end_year;
+
+    if(!frm.doc.date_resigned){
+        //present day
+        var date = new Date();
+        var last_day = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 1);
+        end_year  = new Date(last_day).getFullYear();
+        end_month = new Date(last_day).getMonth();
+        end_day   = new Date(last_day).getDate();
+    } else {
+        //resigned
+        var date = new Date(frm.doc.date_resigned);
+        var last_day = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 1);
+        end_year  = new Date(last_day).getFullYear();
+        end_month = new Date(last_day).getMonth();
+        end_day   = new Date(last_day).getDate();
+    }
+    var months = end_month - start_month + (12 * (end_year - start_year));
+
+    console.log(end_day, start_day)
+    if(end_day < start_day){
+        months--;
+    }
+    console.log("months", months)
+    months = (months % 12)//.toFixed(2);
+    if(months != frm.doc.months_in_service){
+        console.log("months in service must be changed")
+        //frm.doc.months_in_service = months;
+        
+        //if negative
+        if(months <= 0){
+            // frappe.db.set_value('Employee', frm.doc.name, {
+            //     "months_in_service": months
+            // })
+            // frm.set_value("months_in_service", months);
+            frm.doc.months_in_service = 0
+        } else {
+            // frappe.db.set_value('Employee', frm.doc.name, {
+            //     "months_in_service": months
+            // })
+            // frm.set_value("months_in_service", months);
+            frm.doc.months_in_service = months
+        }
+        
+        frm.refresh_field('months_in_service')
+    }
+}
+
+//get series based on location
+async function getSeries(frm){
+    console.log(frm.doc.employee_id)
+    if(frm.doc.__islocal == 1){
+        let filters = {};                                           
+        let fields  = ['*']
+        let data = await frappe.db.get_list("Series Allowed Location", {filters: filters, fields: fields, limit: 1000000});
+        console.log(data)
+
+        $.each(data, async function(i,row) {
+            //for RCS SHARED
+            // if(frm.doc.company == 'RCS SHARED SERVICES, INC.'){
+            //     console.log('company series', row.name)
+            //     frm.doc.company_series = 'SHA'
+            // } else {
+            //     if(frm.doc.location.includes(row.name)){
+            //         console.log('company series', row.name)
+            //         frm.doc.company_series = row.name
+            //     }
+            // }
+            if(row.location == frm.doc.location){
+                frm.doc.company_series = row.parent
+            }
+        })
+        frm.refresh_field('company_series')
+        getLastNumber(frm)
+    }   
+}
+
+//get series based on company if SHARED
+// function getCompSeries(frm){
+//     console.log('COMPANYYYY')
+//     if(frm.doc.name.includes('New Employee')){
+//         if(frm.doc.company == 'RCS SHARED SERVICES, INC.'){
+//             frm.doc.company_series = 'SHA'
+//         } else {
+//             if(frm.doc.location.includes(row.name)){
+//                 console.log('company series', row.name)
+//                 frm.doc.company_series = row.name
+//             }
+//         }
+//     } 
+//     frm.refresh_field('company_series')
+//     getLastNumber(frm)
+// }
+
+//gets the last number of the employee id
+async function getLastNumber(frm){
+    let filters = {["name"]: ["LIKE", '%'+ frm.doc.company_series +'%']};                                           
+    let fields  = ['name']
+    let data = await frappe.db.get_list("Employee", {filters: filters, fields: fields, limit: 1000000});
+    console.log('length', typeof data, data)
+
+    var ids = []
+    if(typeof data == 'undefined'){
+        var empid = frm.doc.company_series + addLeadingZeros(1, 4)
+        frm.doc.employee_id = empid
+        frm.refresh_field('employee_id')
+        console.log('employee id', frm.doc.employee_id)
+    } else {
+        $.each(data, async function(i,row) {
+            row.name = row.name.slice(-3)
+            ids.push(parseInt(row.name))
+        })
+        var num = Math.max.apply(null, ids);//ids.MAX_VALUE;
+        console.log("MAX", num + 1)
+        var empid = frm.doc.company_series + addLeadingZeros(num + 1, 4)
+        frm.doc.employee_id = empid
+        frm.refresh_field('employee_id')
+    }
+}
+
+function addLeadingZeros(num, totalLength) {
+    return String(num).padStart(totalLength, '0');
+}
+
+async function getSiteLocation(frm){
+    let filters = {'location': frm.doc.location};                                           
+    let fields  = ['*']
+    let data = await frappe.db.get_list("Series Allowed Location", {filters: filters, fields: fields, limit: 1000000});
+
+    if(data.length > 0){
+        frm.set_value('company_series', data[0].parent)
+        getLastNumber(frm)
+    } else {
+        frappe.msgprint(__('Location is not included in any company series. Check and update in Employee ID Series Doctype.'));
+    }
+}

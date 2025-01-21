@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <main style="padding: 3% 10%; text-align:justify;">
+        <header>
+            <div style="border-bottom: 2px solid black; display:flex; justify-content:space-between;">
+                <div>
+                    <img src="https://res.cloudinary.com/do1xgqgpg/image/upload/v1728359550/ecumct0uxvaebswj1g18.png" alt="Logo" style="width: 200px; margin-left:10px;">
+                </div>
+                <div style="text-align: right; font-family: 'Times New Roman', Times, serif;">
+                    <p style="text-transform: uppercase; font-weight:bold; font-size:15px;">disciplinary action</p>
+                    <p style="text-transform: uppercase;">{{doc.name}}</p>
+                </div>
+            </div>
+        </header>
+        <section style="border-bottom: 2px solid black; margin-top:20px">
+            <table style="text-transform: uppercase;">
+                {% set date = frappe.db.get_value('Incident Report', doc.incident_report , 'date_time_offense') %}
+                <tr>
+                    <td style="width: 240px;">Date:</td>
+                    <td>{{frappe.utils.formatdate(date, ' MMMM dd, yyyy')}}</td>
+                </tr>
+                <tr>
+                    <td>Employee Name:</td>
+                    <td>{{doc.employee_name}}</td>
+                </tr>
+                <tr>
+                    <td>Employee No.:</td>
+                    <td>{{doc.employee}}</td>
+                </tr>
+                <tr>
+                    <td>Position:</td>
+                    <td>{{frappe.db.get_value('Employee', doc.employee, 'position_title')}}</td>
+                </tr>
+                
+                <tr>
+                    {% set division = frappe.db.get_value('Employee', doc.employee ,'division')%} 
+                    {% set department = frappe.db.get_value('Employee', doc.employee ,'department')%}
+                    {% set divmap = frappe.db.get_value('Department', division, 'department_name') %}
+                    {% set deptmap =frappe.db.get_value('Department', department, 'department_name') %}
+                    <td>Division & Department:</td>
+                    <td> {% if divmap != None %}{{divmap}}/{% endif %}  {% if deptmap != None %}{{deptmap}}{% endif %} </td>
+                </tr>
+                <tr>
+                    <td>Subject:</td>
+                    <td><b>NOTICE OF RESOLUTION </b></td>
+                </tr>
+            </table>
+        </section>
+
+        <section style="margin-top: 20px;">
+            <label for="table" style="font-weight: bold;">COMPLIANCE WITH DUE PROCESS</label>
+            <div style="padding: 2% 5%;">
+                <table id="table" style="line-height: 80%;">
+                    <tr>
+                        <td>1.	Notice to Explain received by the employee on</td>
+                        <td style="width: 50px; text-align:center;">:</td>
+                        <td>{{frappe.utils.formatdate(doc.notice_to_explain_recieved_by, ' MMMM dd, yyyy')}}</td>
+                    </tr>
+                    <tr>
+                        <td>2.	Response received by the Immediate Superior on</td>
+                        <td style="width: 50px; text-align:center;">:</td>
+                        <td>{{frappe.utils.formatdate(doc.response_recieved_by, ' MMMM dd, yyyy')}}</td>
+                    </tr>
+                    <tr>
+                        <td>3.	Administrative Hearing held on</td>
+                        <td style="width: 50px; text-align:center;">:</td>
+                        <td>{{frappe.utils.formatdate(doc.administrative_hearing, ' MMMM dd, yyyy')}}</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+        <section style="margin-top: 30px;">
+            <label for="content" style="font-weight: bold;">SUMMARY OF THE CASE</label>
+            <div id="content">
+                <br>
+                <p>{{doc.details_of_violation}}</p>
+                <p style="margin-top: 20px;">Subsequently a Notice to Explain was issued to you on {{frappe.utils.formatdate(doc.posting_date, ' MMMM dd, yyyy')}}, asking you to explain why no corrective action should be given to you on account of the above incidents.  In your reply, {{doc.reply}}.</p>
+                <p style="margin-top: 20px;">To provide you with another opportunity to explain your side and to present documents, an Administrative Hearing was held on {{frappe.utils.formatdate(doc.administrative_hearing, ' MMMM dd, yyyy')}} in the presence of a Panel formed to hear, discuss, and deliberate the decision for your case. In the said conference, the following were noted:</p>
+                <br>
+                <ol >
+                    {% for s in doc.summary_of_the_case_table %}
+                    <li>{{s.description}}</li>
+                    {% endfor %}
+                </ol>
+            </div>
+            <br><br>
+            <label for="content1" style="font-weight: bold;">FINDINGS AND CONCLUSIONS</label>
+            <div id="content1">
+                <p style="margin-top: 20px;">After careful evaluation based on the information and documents gathered and the administrative investigation meeting conducted, it was established that:</p>
+                <br>
+                <ol >
+                    {% for s in doc.finding_and_conclusions_table %}
+                    <li>{{s.description}}</li>
+                    {% endfor %}
+                </ol>
+
+                <p style="margin-top: 35px;">Counseling notes</p>
+                <p style="margin-top: 35px;">After evaluating all the pieces of evidence gathered, we found that you have committed violations of the Company’s Code of Conduct in relation to Article 297 of the Labor Code of the Philippines, as follows:</p>
+                <br>
+                <label for="provision" style="font-weight: bold;">PROVISION</label>
+                <table id="provision" border="1">
+                    <tr>
+                        <td style="text-transform:uppercase; text-align:center; font-weight: bold; width:200px;">Offense</td>
+                        <td style="text-transform:uppercase; text-align:center; font-weight: bold;">1st Offense</td>
+                        <td style="text-transform:uppercase; text-align:center; font-weight: bold;">2nd Offense</td>
+                        <td style="text-transform:uppercase; text-align:center; font-weight: bold;">3rd Offense</td>
+                        <td style="text-transform:uppercase; text-align:center; font-weight: bold;">4th Offense</td>
+                        <td style="text-transform:uppercase; text-align:center; font-weight: bold;">5th Offense</td>
+                        <td style="text-transform:uppercase; text-align:center; font-weight: bold;">Category</td>
+                    </tr>
+                    {% for m in doc.da_multiple_offense_table %}
+                    <tr>
+                        <td>{{m.offense_data}}</td>
+                        <td>{% if m['1st_offense'] != None %}{{m['1st_offense']}}{% endif %}</td>
+                        <td>{% if m['2nd_offense'] != None %}{{m['2nd_offense']}}{% endif %}</td>
+                        <td>{% if m['3rd_offense'] != None %}{{m['3rd_offense']}}{% endif %}</td>
+                        <td>{% if m['4th_offense'] != None %}{{m['4th_offense']}}{% endif %}</td>
+                        <td>{% if m['5th_offense'] != None %}{{m['5th_offense']}}{% endif %}</td>
+                        <td>{{frappe.db.get_value('Offense', m.offense_id, 'category')}}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            
+        </section>
+        <section>
+            <p style="font-weight: bold; text-decoration:underline; margin-top:20px;">Labor Code of the Philippines </p>
+            <br>
+            <label for="list">Art. 297. Termination by Employer. An employer may terminate an employment for any of the following causes: </label>
+            <br>
+            <ol id="list" type="a">
+                <li>Serious misconduct or willful disobedience by the employee of the lawful orders of his employer or representative in connection with his work; </li>
+                <li>Gross and habitual neglect by the employee of his duties;</li>
+                <li>Fraud or willful breach by the employee of the trust reposed in him by his employer or duly authorized representative;</li>
+                <li>Other causes analogous to the foregoing. </li>
+            </ol>
+            <br>
+            <p>
+                Note that as an employee of {{frappe.db.get_value('Employee', doc.employee, 'company')}}, you are expected to fulfill your responsibilities in your role, including strict adherence to the company’s policies and guidelines
+            </p>
+
+            <br>
+            {% set isSuspended = frappe.db.get_value('Sanction', doc.sanction, 'for_suspension') %}
+            {% if isSuspended == 1 %}
+            <p style="text-transform: uppercase;"><b>IN VIEW OF THE FOREGOING, REVIEW, HEARING AND DELIBERATION, THE COMPANY, HAS DECIDED TO IMPOSE UPON YOU A CORRECTIVE ACTION OF {{doc.sanction}} WHICH WILL TAKE EFFECT FROM {{frappe.utils.formatdate(doc.suspended_from, 'MMMM dd, yyyy')}} TO {{frappe.utils.formatdate(doc.suspended_to, 'MMMM dd, yyyy')}}.</b></p>
+            <br>
+            <p><b>
+                THIS NOTICE ALSO GOES WITH STERN WARNING THAT REPETITION OF THE SAME OR SIMILAR OFFENSE IN THE FUTURE WILL BE DEALT WITH A STRICTER CORRECTIVE ACTION INCLUDING TERMINATION OF EMPLOYMENT. 
+            </b></p>
+            <br><br>
+            {% endif %}
+            <p>For your information and guidance.</p>
+        </section>
+
+        <section style="margin-top: 50px;">
+            <div style="display: flex; justify-content:space-between;">
+                <div style="width: 200px;">
+                    <p style="font-weight: bold;">{% set reports_to = frappe.db.get_value('Employee', doc.employee, 'reports_to') %} {% if reports_to != None %}{{reports_to}}{% endif %}</p>
+                    <p>Immediate Head</p>
+                </div>
+                <div style="width: 200px;">
+                </div>
+            </div>
+            <div style="display: flex; justify-content:space-between; margin-top: 50px;">
+                <div style="width: 200px;">
+                    <p style="font-weight: bold;"></p>
+                    <p>HR Specialist - Employee Relation</p>
+                </div>
+                <div style="width: 200px;">
+                    <p style="font-weight: bold;"></p>
+                    <p>Sr. HR and Admin Manager</p>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

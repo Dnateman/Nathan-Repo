@@ -1,0 +1,154 @@
+frappe.ui.form.on('Compensatory Time Off', {
+    refresh: function(frm) {
+        if (frm.doc.docstatus == 1 && !frm.custom_button_added) {
+            if (frm.doc.workflow_state === "Approved") {
+                customButton(frm);
+                frm.custom_button_added = true;
+            }
+        }
+    },
+    onload: async function(frm) {
+
+        if(frm.doc.workflow_state == "Pending"){
+            const { tk_cto_perday, tk_cto_max } = await getTimekeepingSettings();
+            frm.set_value('tk_cto_perday', tk_cto_perday);
+            frm.set_value('tk_cto_max', frm.doc.cto_targets.length);
+            console.log(tk_cto_perday, frm.doc.cto_targets.length);
+            
+            if (tk_cto_perday == 0) {
+                frm.set_df_property("cto_perday_credits", "hidden", true);
+                frm.set_df_property("cto_earned_days", "hidden", true);
+            }
+            if (tk_cto_perday == 1){
+                frm.set_df_property("total_credits_earned", "hidden", true);
+            }
+    
+            // Populate the select field based on tk_cto_max
+            populateSelectOptions(frm, frm.doc.cto_targets.length);
+    
+            if (frm.doc.approved_on && frm.doc.approved_on.length > 0) {
+                frm.set_df_property("cto_perday_credits", "allow_on_submit", 0);
+            } else {
+                frm.set_df_property("cto_perday_credits", "allow_on_submit", 1);
+            }
+    
+            // Ensure cto_earned_days is read-only but can be submitted
+            frm.set_df_property('cto_earned_days', 'read_only', 1);
+            frm.set_df_property('cto_earned_days', 'allow_on_submit', 1);
+        }else{
+            frm.set_df_property("cto_perday_credits", "hidden", true);
+            frm.set_df_property("cto_earned_days", "hidden", true);
+
+        }
+        
+    },
+    async validate(frm) {
+        await BlockFilling(frm);
+    },
+    'tk_cto_perday': function(frm) {
+        frm.trigger('round_cto_perday');
+    },
+    round_cto_perday: function(frm) {
+        let tk_cto_perday = frm.doc.tk_cto_perday;
+
+        if (tk_cto_perday !== undefined && !isNaN(tk_cto_perday)) {
+            const roundedValue = Math.round(tk_cto_perday * 2) / 2;
+
+            if (roundedValue !== tk_cto_perday) {
+                frm.set_value('tk_cto_perday', roundedValue);
+                frappe.msgprint(__('The value for tk_cto_perday has been rounded to the nearest multiple of 0.5.'));
+            }
+        }
+    },
+    'cto_perday_credits': function(frm) {
+        // Trigger update on cto_earned_days when cto_perday_credits changes
+        if (frm.doc.cto_perday_credits > 0) {
+            const previous_earned_days = frm.doc.cto_earned_days || 0;
+            const new_earned_days = frm.doc.cto_perday_credits;
+
+            frm.set_value('cto_earned_days', new_earned_days);
+            frappe.msgprint(__('CTO Earned Days has been updated to ') + new_earned_days);
+        }
+    }
+});
+
+function customButton(frm) {
+    function getLink() {
+        return splitURL() + frm.doc.attachment;
+    }
+
+    var customButton = $('<button>')
+        .text('View Attachment')
+        .addClass('btn btn-primary')
+        .css({
+            'text-align': 'center',
+            'font-family': '-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif',
+            'font-size': '12px',
+            'width': '150px',
+            'height': '30px',
+            'background-color': '#718d8a',
+            'border-color': 'black'
+        })
+        .click(function() {
+            if (frm.doc.attachment) {
+                var link = getLink(); 
+                window.open(link);
+                console.log(link);
+            } else {
+                frappe.msgprint({
+                    title: __('Warning'),
+                    indicator: 'orange',
+                    message: __('Attachment must be filled first')
+                });
+            }
+        });
+
+    $(frm.fields_dict.attachment.wrapper).find('.custom-button-wrapper').remove();
+    $(frm.fields_dict.attachment.wrapper).append(customButton);
+}
+
+function splitURL() {
+    const location = window.location.href;
+    const url = new URL(location);
+    const split = `${url.protocol}//${url.host}`;
+    return split;
+}
+
+async function getTimekeepingSettings() {
+    const timekeeping_settings = await frappe.db.get_doc("Timekeeping Settings");
+    const tk_cto_perday = timekeeping_settings.cto_perday;
+    const tk_cto_max = timekeeping_settings.cto_max;
+    return { tk_cto_perday, tk_cto_max };
+}
+
+function populateSelectOptions(frm, max) {
+    // Clear existing options
+    frm.set_df_property('cto_perday_credits', 'options', []);
+    
+    // Generate new options based on tk_cto_max
+    const options = [];
+    for (let i = 0.5; i <= max; i += 0.5) {
+        options.push(i.toFixed(1)); // Format to one decimal place
+    }
+
+    // Set the generated options in the select field
+    frm.set_df_property('cto_perday_credits', 'options', options);
+    frm.refresh_field('cto_perday_credits'); // Refresh the field to show new options
+}
+
+frappe.ui.form.on("Compensatory Time Off Targets", {
+    async filed_cto(frm, cdt, cdn){
+        console.log(await frappe.db.get_list('Compensatory Time Off Targets', {filters: {'name': doc.filed_cto }, fields: ['*']}))
+        let row = locals[cdt][cdn]
+        if (row.filed_cto){
+            let _filters = {"Approved": doc.workflow_state, "File" : doc.type, "employee" : doc.employee };
+            let _fields  = ["total_Balance", "type","employee"]
+            let _data = frappe.db.get_list("Compensatory Time Off",{filters: _filters, fields: _fields, limit: 100});
+
+            console.log(_data)
+
+            
+
+        }
+    },
+    });

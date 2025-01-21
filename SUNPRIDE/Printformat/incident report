@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        font-size: 10px;
+                        line-height: 12px;
+                        padding: 10px;
+                    }
+                    .tab {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 0;
+                    }
+                    .tab td, .tab th {
+                        border: 1px solid black;
+                        padding: 4px;
+                        line-height: normal;
+                    }
+                    .header-2 {
+                        background-color: black;
+                        color: white;
+                        text-align: center;
+                        font-weight: bold;
+                        text-transform: uppercase;
+                    }
+                    .center {
+                        text-align: center;
+                    }
+                    .no-border {
+                        border: none !important;
+                    }
+                    .small-text {
+                        font-size: 10px;
+                    }
+                    .right {
+                        text-align: right;
+                    } 
+                    .bottom-right {
+                        height: 100%;
+                    }
+                </style>
+            </head>
+            <body class="bd">
+                {% set emp = frappe.get_all('Employee', filters={'email': doc.owner}, fields=['*']) %}
+                
+                <header>
+                    <div style="display: flex; justify-content:space-between; background-color:black; width:715px;">
+                        <div><img src="https://res.cloudinary.com/do1xgqgpg/image/upload/v1728359550/ecumct0uxvaebswj1g18.png" style="width:300px;">    </div>
+                        <div style="align-content: flex-end;"><p style = "margin:0 10px 10px 0 ; font-size:18px; font-weight:bold; align-content:flex-end; text-align: right;color: white;">Incident Report</p></div>
+                    </div>
+                </header> 
+            
+                <table class='tab'>
+                    <tr class='no-border'>
+                        <td colspan='5' class='no-border'></td>
+                    </tr>
+                    <tr class='tr-tab no-border'>
+                        <td class='td-tab no-border'>Date Prepared:</td>
+                        <td class='td-tab no-border'>{{ frappe.utils.formatdate(doc.posting_date, 'MMMM dd, yyyy') }}</td>
+                        <td class='td-tab no-border'>&nbsp;</td>
+                        <td class='td-tab no-border'>Incident No:</td>
+                        <td class='td-tab no-border'>{{ doc.name }}</td>
+                    </tr>
+                    <tr class='tr-tab'>
+                        <td colspan="5" class="header-2 center">INCIDENT INFORMATION</td>
+                    </tr>
+                    <tr class='tr-tab'>
+                        <td class='td-tab'>
+                            <span class="att">Reporter's Name:</span>
+                            <p class='right'>{{ emp[0].first_name }} {{ emp[0].last_name }}</p>
+                        </td>
+                        <td class='td-tab'>
+                            <span class="att">Division & Dept.:</span>
+                            <p class='right'>
+                                {% set division_name = frappe.db.get_value("Department", emp[0].division, "department_name") %}
+                                {% set department_name = frappe.db.get_value("Department", emp[0].department, "department_name") %}
+                                {% if division_name and department_name %}
+                                    {{ division_name }} - {{ department_name }}
+                                {% else %}
+                                    {{ division_name or '' }}{{ division_name and department_name and '-' or '' }}{{ department_name or '' }}
+                                {% endif %}
+                            </p>
+                        </td>
+                        <td class='td-tab'>
+                            <span class="att">Position:</span>
+                            <p class='right'>{{ emp[0].position_title }}</p>
+                        </td>
+                        <td colspan="2">
+                            <span class="att">Contact No/s: <small>If needs further investigation</small></span>
+                            <p class='right'></p>
+                        </td>
+                    </tr>
+                    <tr class='tr-tab'>
+                        <td colspan="3">
+                            <span class="att">Location of the Incident:</span>
+                            <p class='right'>{{ doc.actual_location}}</p>
+                        </td>
+                        <td class='td-tab'>
+                            <span class="att">Date of Incident:</span>
+                            <p class='right'>{{ frappe.utils.formatdate(doc.date_time_offense, 'MMMM dd, yyyy') }}</p>
+                        </td>
+                        <td class='td-tab'>
+                            <span class="att">Time of incident</span>
+                            <p class='right' id="SHOW"></p>
+                        </td>
+                    </tr>
+                    <tr class='tr-tab'>
+                        <td colspan="5" class="header-2 center">PERSON/S INVOLVED</td>
+                    </tr>
+                </table>
+                <table class='tab'>
+                    <tr style="font-size: 9px;" class='tr-tab'>
+                        <td rowspan="2" class="center td-tab" style="font-size: 13px;">Name</td>
+                        <td rowspan="2" class="center td-tab" style="font-size: 13px;">Company</td>
+                        <td rowspan="2" class="center td-tab" style="font-size: 13px;">Position</td>
+                        <td rowspan="2" class="center td-tab" style="font-size: 13px;">Division & Department</td>
+                        <td class="center td-tab" colspan="2" style="font-size: 13px;">Involvement</td>
+                    </tr>
+                    <tr class='tr-tab' style="font-size: 8px;">
+                        <td class="center td-tab">Directly Involved</td>
+                        <td class="center td-tab">Witness</td>
+                    </tr>
+                    {% for i in doc.involved_employees %}
+                        <tr class='tr-tab'>
+                            <td class='td-tab center'>{{ i.employee_name }}</td>
+                            <td class='td-tab center'>{{ i.company }}</td>
+                            <td class='td-tab center'> {% if i.position_title == None  %}   {% else %} {{ i.position_title }} {% endif %}</td>
+                            <td class='td-tab center'>
+                                {% if i.division and i.department %}
+                                {{ i.division }} - {{ i.department }}
+                                {% else %}
+                                    {{ i.division or '' }}{{ i.division and i.department and '-' or '' }}{{ i.department or '' }}
+                                {% endif %}
+                            </td>
+                            <td class='td-tab center'>{% if i.involvement == 'Witness' %}◻{% else %}☑{% endif %}</td>
+                            <td class='td-tab center'>{% if i.involvement == 'Witness' %}☑{% else %}◻{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+                <table class='tab'>
+                    <tr class='tr-tab' >
+                        <td class="header-2" colspan="3" >INCIDENT DETAILS</td>
+                    </tr>
+                    <tr class='tr-tab'>
+                        <td style=" height:400px;" colspan="3">
+                            <p style="padding: 0px 5px 0px 5px ; margin: 0px 5px 0px 5px; text-align: justify;">
+                            <span class="small-text" ><b>In aid of investigation, please explain your participation and/or what you know about the incident. Kindly narrate the pertinent factors leading to the incident. Be as specific as posssible and attach additional documents if necessary </b></span>
+                            <br>
+                            <span class="small-text" style="padding: 0px 5px 0px 5px ; margin: 0px 5px 0px 5px;text-indent: 0px;"><i>(Alang sa pagtabang sa imbestigasyon, palihog isulat unsay imong partisipasyon og nahibaw-an bahin sa panghitabo. Isaysay ang pagkasunod-sunod sa mga panghitabo ug ang tanan
+                            nga may kalabutan ug hinungdan kabahin sa insidente. Palihog isulat tanang espesipiko kutob sa mahimo ug ilakip ang uban pang dugang nga dokumento kung gikinahanglan)</i></span> </p>
+                            <p style="padding: 3% 10%;">
+                                <br>
+                                {{doc.details_of_violation}}
+                                <br><br>
+                               
+                            </p>
+                            
+                        </td>
+                    </tr>
+
+                    <tr class='tr-tab'>
+                        <td class="header-2" colspan="3" >signatories</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <label for="submitted">Submitted By:</label>
+                            <br><br>
+                            <p class="submitted">
+                                {{ emp[0].first_name }} {{ emp[0].last_name }}
+                            </p>
+                            <p>
+                                Reporter's name and signature
+                            </p>
+                        </td>
+                        <td>
+                            <label for="noted">Noted By:</label>
+                            <br><br>
+                            <p class="noted">
+                               {% if  frappe.db.get_value('Employee', emp[0].employee, 'reports_to') == None %}  {% else %} {{frappe.db.get_value('Employee', emp[0].employee, 'reports_to')}} {% endif %}
+                            </p>
+                            <p>
+                                Immediate Superior's and signature
+                            </p>    
+                        </td>
+                        <td>
+                            <label for="received">Received By:</label>
+                            <br><br>
+                            <p class="received">
+
+                            </p>
+                            <p>
+                                HR Employee Relation's name and signature
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Date:</td>
+                        <td>Date:</td>
+                        <td>Date:</td>
+                    </tr>
+                </table>
+            
+                <script>
+                    var time = localStorage.getItem("date_time");
+                    document.getElementById("SHOW").innerHTML = time;
+                </script>
+            </body>
+            </html>

@@ -1,0 +1,140 @@
+frappe.ui.form.on('Notice to Explain', {
+    async refresh(frm) {
+        $('.fa.fa-print').hide();
+        if (frm.doc.docstatus === 1) {
+            const host = `${window.location.protocol}//${window.location.host}`;
+            
+            function createStyledButton(label, clickHandler) {
+                let button = frm.add_custom_button(__(label), clickHandler);
+                button.css({
+                    'background-color': '#5292f7',
+                    'color': 'white',
+                    'border': 'none',
+                    'padding': '5px 20px',
+                    'text-align': 'center',
+                    'text-decoration': 'none',
+                    'display': 'inline-block',
+                    'font-size': '12px',
+                    'margin-top': '0px',
+                    'cursor': 'pointer',
+                    'border-radius': '4px'
+                });
+                return button;
+            }
+    
+            createStyledButton('Print NTE', function() {
+                window.open(`${host}/printview?doctype=Notice%20to%20Explain&name=${frm.doc.name}&trigger_print=1&format=NTE%20Form&no_letterhead=0&_lang=en`);
+            });
+        }
+        await updateFormDisplay(frm);
+    },
+    
+    async onload(frm) {
+        await updateFormDisplay(frm);
+        getdivision(frm)
+    },
+    
+    async before_workflow_action(frm) {
+        if (frm.selected_workflow_action === "Forward to Employee" || frm.selected_workflow_action === "Submit") {
+            await updateFormDisplay(frm);
+        }
+    }
+});
+
+async function updateFormDisplay(frm) {
+    try {
+        let allowed_role = await AllowedRoles(frm);
+
+        switch (frm.doc.workflow_state) {
+            case "Draft":
+                handleDraftState(frm, allowed_role);
+                break;
+            case "Pending Employee Explanation":
+                handlePendingEmployeeExplanationState(frm, allowed_role);
+                break;
+            case "Submitted":
+                frm.toggle_display('employee_explanations', true);
+                break;
+        }
+    } catch (error) {
+        console.error('Error in updateFormDisplay function:', error);
+        frappe.msgprint({
+            title: __('Error'),
+            indicator: 'red',
+            message: __('An error occurred while updating the form display. Please try again or contact support.')
+        });
+    }
+}
+
+function handleDraftState(frm, allowed_role) {
+    if (allowed_role) {
+        frm.toggle_display('employee_explanations', false);
+    } else {
+        frm.toggle_display('section13', false);
+        frm.toggle_display('violation_details_', false);
+        frm.toggle_display('incident_report', false);
+        frm.toggle_display('email_section', false);
+    }
+}
+
+function handlePendingEmployeeExplanationState(frm, allowed_role) {
+    if (allowed_role) {
+        frm.set_df_property('employee_explanations', 'read_only', 1);
+    } else {
+        frm.toggle_display('section13', true);
+        frm.toggle_display('employee_explanations', true);
+        frm.toggle_display('violation_details_', true);
+        frm.toggle_display('incident_report', false);
+        frm.toggle_display('email_section', false);
+
+        // Set the entire child table and specific fields to read-only
+        frm.set_df_property('multiple_offense_table', 'read_only', 1);
+        frm.fields_dict['multiple_offense_table'].grid.get_field('offense_id').df.read_only = 1;
+        frm.fields_dict['multiple_offense_table'].grid.refresh_field('offense_id');
+    }
+}
+
+async function AllowedRoles(frm) {
+    try {
+        let CustomSettings = await frappe.db.get_doc("Customized Employee Settings");
+        let allowed_role_list = CustomSettings.allowed_role
+            .map(row => row.role)
+            .filter(role => role);
+
+        let cur_user_roles = frappe.user_roles;
+        return cur_user_roles.some(role => allowed_role_list.includes(role));
+    } catch (error) {
+        console.error('Error in AllowedRoles function:', error);
+        frappe.msgprint({
+            title: __('Error'),
+            indicator: 'red',
+            message: __('An error occurred while processing the role check. Please try again or contact support.')
+        });
+        return false;
+    }
+}
+
+async function getdivision(frm) {
+    console.group('Get Division')
+
+    let irFilter = { 'name': frm.doc.incident_report };
+    //Get IR Data
+    let irData = await frappe.db.get_list("Incident Report", { 
+        filters: irFilter, 
+        fields: ["owner"], 
+        limit: 150 
+    });
+    console.log('IR Data', irData)
+
+    let empFilter = { 'owner': frm.doc.email };
+    let empsData = await frappe.db.get_list("Employee", { 
+        filters: empFilter, 
+        fields: ["email","division_"], 
+        limit: 150 
+    });    
+    console.log('Employee Data', empsData) 
+
+    
+
+    console.groupEnd()
+}

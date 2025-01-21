@@ -1,0 +1,66 @@
+<!--                          COE without Compensation                       -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COE</title>
+</head>
+<body>
+    <br><br><br>
+
+    <main style="padding: 10%;">
+        <h3 style="font-weight: bold; text-align:center; font-size:22px;">CERTIFICATE OF EMPLOYMENT AND COMPENSATION</h3>
+        <section style="text-align: justify; font-size:18px;">
+            {% set division = frappe.db.get_value('Employee', doc.employee ,'division')%} 
+            {% set department = frappe.db.get_value('Employee', doc.employee ,'department')%}
+            <p style="margin-top: 55px;">
+                This is to certify that <b>{{doc.employee_name}}</b> is a {{frappe.db.get_value("Employee",doc.employee,'employment_status')}} employee of 
+                <b> {{ frappe.db.get_value("Employee",doc.employee,'company') | upper}} </b> from <b>{{frappe.utils.formatdate(doc.from_date, 'dd MMMM yyyy')}}</b> to 
+                <b>present</b>, holding the position of <b>{{ frappe.db.get_value('Employee', doc.employee, 'position_title') }}</b> under
+                <b>{% if division is none %}''{% else %}{{ division | replace(' - SFI', '') }}, {% endif %}
+                {% if department is none %}''{% else %}{{ department | replace(' - SFI', '') }}.{% endif %}</b>
+            </p>
+            {% set gender = frappe.db.get_value('Employee', doc.employee, 'gender') %}
+            <p style="margin-top: 55px;">
+                His current annual gross compensation is 
+                {% set rate_type = frappe.db.get_value('Employee', doc.employee, 'rate_type') %}
+                {% if rate_type == 'Daily Rate' %}
+                    {% set daily = frappe.db.get_value('Employee', doc.employee, 'rate') * frappe.db.get_value('Employee', doc.employee, 'total_yr_days') * 12 %}
+                    {{ frappe.utils.money_in_words(daily | float, 'P') | replace("P", '') | replace("only", 'Pesos') }} (P{{ frappe.format(daily, 'Currency') }}).
+                {% elif rate_type == 'Monthly Rate' %}
+                    {% set monthly = frappe.db.get_value('Employee', doc.employee, 'rate') * 12 %}
+                    {{ frappe.utils.money_in_words(monthly | float, 'P') | replace("P", '') | replace("only", 'Pesos') }} (P{{ frappe.format(monthly, 'Currency') }}).
+                {% endif %}
+                
+            </p>
+            <p style="margin-top: 55px;">
+                This certification is issued upon the request of {{frappe.db.get_value("Employee",doc.employee,'first_name')}} as part of his {{doc.details}}
+            </p>
+            <p style="margin-top: 55px;">
+                Issued in {{ frappe.db.get_value("Company",doc.company,'current_address')}} this {{frappe.utils.formatdate(doc.posting_date, 'dd')}} day of {{frappe.utils.formatdate(doc.posting_date, 'MMMM yyyy')}}.
+            </p>
+            <p style="margin-top: 55px;">
+                Certified true and correct.
+            </p>
+
+            <p style="margin-top: 55px; text-transform: uppercase;">
+                <b>{{doc.signatories_name}}</b>
+                <br>
+				{{ doc.signatories_position_title | upper }}
+
+            </p>
+            <p style="font-weight: bold; opacity:0.4; margin-top:60px;">
+                #brightfutureatsunpride
+            </p>
+
+        </section>
+    </main>
+
+    <script>
+        var annual = localStorage.getItem("annual_salary")
+        var total = annual / 12
+        document.getElementById("SHOW").innerHTML = total
+    </script>
+</body>
+</html>

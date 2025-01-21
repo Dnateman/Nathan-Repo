@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <main style="padding: 1% 8%;">
+        <section style="">
+            {% set division = frappe.db.get_value('Employee', doc.employee ,'division')%} 
+            <img src="https://res.cloudinary.com/do1xgqgpg/image/upload/v1728359550/ecumct0uxvaebswj1g18.png" alt="" style="width:160px; margin: 10px 0 10px 0; opacity:0.4;">
+
+            <p style="font-weight: bold; opacity:0.5; margin-top:-2%;">{{frappe.db.get_value('Department', division, 'department_name')}}</p>
+        </section>
+
+        <section style="border-bottom:2px solid black ;">
+            <h1 style="text-align:center; font-weight:bold; text-transform:uppercase;">employee clearance form</h1>
+            <br>
+            <div style="display: flex; justify-content:space-between; margin-bottom:7px;">
+                <table style="line-height: 50%;">
+                    <tr>
+                        <td style="width: 100px;">Name</td>
+                        <td>:</td>
+                        <td style="border-bottom: 1px solid black; width:150px;">{{doc.employee_name}}</td>
+                    </tr>
+                    <tr>
+                        <td>Employee No.</td>
+                        <td>:</td>
+                        <td style="border-bottom: 1px solid black; width:150px;">{{doc.employee}}</td>
+                    </tr>
+                    <tr>
+                        <td>Position</td>
+                        <td>:</td>
+                        <td style="border-bottom: 1px solid black; width:150px;">{{doc.position}}</td>
+                    </tr>
+                    <tr>
+                        <td>Department</td>
+                        <td>:</td>
+                        <td style="border-bottom: 1px solid black; width:150px; line-height: 1.6;">{{doc.department}}</td>
+                    </tr>
+                    <tr>
+                        <td>Contact No.</td>
+                        <td>:</td>
+                        <td style="border-bottom: 1px solid black; width:150px;"></td>
+                    </tr>
+                </table>
+
+                <table style="line-height: 50%;">
+                    <tr>
+                        <td style="width: 150px;">Date Filed</td>
+                        <td>:</td>
+                        <td style="border-bottom: 1px solid black; width:150px;">{{doc.posting_date}}</td>
+                    </tr>
+                    <tr>
+                        <td>Employment Status</td>
+                        <td>:</td>
+                        <td style="border-bottom: 1px solid black; width:150px;">{{doc.employment_status}}</td>
+                    </tr>
+                    <tr>
+                        <td>Date Employed</td>
+                        <td>:</td>
+                        <td style="border-bottom: 1px solid black; width:150px;">{{doc.date_employed}}</td>
+                    </tr>
+                    <tr>
+                        <td>Employment Status</td>
+                        <td>:</td>
+                        <td style="border-bottom: 1px solid black; width:150px;">{{doc.employment_status}}</td>
+                    </tr>
+                    
+                </table>
+            </div>
+        </section>
+
+        <section>
+            <label for="instruction">Instructions on processing of Employee Clearance and Quit Claim:</label>
+            <ol id="instruction" type="1" style="text-align: justify;">
+                <li>At least a week prior to separation date, employee must personally accomplish and route the clearance certificate to each clearing officer following the sequence written in the form. HR to identify in the remarks portion which division/department is not applicable in the clearance process.</li>
+                <li>Below are the standard items that must be returned/settled by the employee to respective clearing officers. The list only serves as a guide.  There are some other items that may be required by the clearing officer.</li>
+                <li>For a more efficient processing, employee may inquire in advance from divisions/departments concerned regarding items that s/he has to settle or return.</li>
+                <li>In case employee still has pending loans &/or accountabilities after computing the "amount due to/(from) employee”, Payroll informs the employee and his/her immediate superior. Employee will be required to settle all accountabilities from the company for him/her to be issued the Clearance Certificate.</li>
+                <li>No employee shall be issued Certificate of Employment until s/he has completely processed his/her Clearance/Quit Claim. All rights of the Company are reserved.</li>
+            </ol>
+            <br>
+            <br>
+            <p style="font-style: italic; text-align:justify;"><u>*Note to Clearing Officers:</u>By signing on this form, you are certifying that the above-named employee has been cleared of the known money, records, equipment, tools, supplies and/or any other known accountabilities with SUNPRIDE FOODS, INC. specifically indicated herein as of the date indicated below. Please use additional sheet if necessary.</p>
+
+            <table border="1">
+                <tr>
+                    <th style="width: 200px; text-align:center;">Department / Division</th>
+                    <th style="width: 200px; text-align:center;">Requirements</th>
+                    <th style="width: 200px; text-align:center;">Signature over printed name and date signed</th>
+                    <th style="width: 200px; text-align:center;">Remarks</th>
+                </tr>
+                {% for m in doc.matrix %}
+                <tr>
+                    <td style="text-align: center;">{{m.department_and_division}}</td>
+                    <td style="text-align: center;">{{m.requirements}}</td>
+                    <td style="text-align: center;">{{m.signatories}}</td>
+                    <td style="text-align: center;">{{m.remarks}}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,106 @@
+frappe.ui.form.on('Certificate of Employment', {
+	refresh(frm){
+        $('.fa.fa-print').hide();
+       
+        printButton(frm)
+    },
+    employee: async function(frm) {
+		// your code here
+        empDet(frm)
+		computeAnnual(frm)
+        computeMonthly(frm)
+	},
+	coe_type(frm){
+        automateSignatories(frm)
+	},
+    async onload(frm){
+        //computeAnnual(frm)
+    }
+})
+
+function automateSignatories(frm){
+    if(frm.doc.coe_type === "COE without Compensation"){
+        frm.set_value('signatories', '17541')
+    }else if(frm.doc.coe_type === ""){
+        frm.set_value('signatories', '')
+        frm.set_value('signatories_name', '')
+    }else{
+        frm.set_value('signatories', '1153')
+    }
+}
+
+async function empDet(frm){
+    const empDet =  await frappe.db.get_doc("Employee", frm.doc.employee)
+    if(empDet.is_active == 1){
+        let today = new Date();
+        //frm.set_value('your_date_field', formattedDate);
+        frm.set_value('is_present' , 1) 
+        frm.set_value('to_date' , today) 
+    }else{
+        frm.set_value('is_present' , 0) 
+        frm.set_value('to_date' , '') 
+    }
+}
+
+async function computeAnnual(frm){
+    const empData = await frappe.db.get_doc("Employee", frm.doc.employee)
+    console.log(empData.rate_type)
+        let anual_salary = 0
+        switch (empData.rate_type) {
+            case "Monthly Rate":
+                    anual_salary = empData.rate * 12
+                break;
+            case "Daily Rate":
+                    anual_salary = (empData.rate * empData.total_yr_days) 
+                break;
+            case "Hourly Rate":
+                    anual_salary = ((empData.rate * empData.no_hours) * empData.total_yr_days) 
+                break;
+            default:
+                break;
+        }
+        frm.set_value('annual_salary', anual_salary)
+}
+
+async function computeMonthly(frm){
+    const empData = await frappe.db.get_doc("Employee", frm.doc.employee)
+    console.log(empData.rate_type)
+        let monhtly_salary = 0
+        switch (empData.rate_type) {
+            case "Monthly Rate":
+                    monhtly_salary = empData.rate
+                break;
+            case "Daily Rate":
+                    monhtly_salary = (empData.rate * empData.total_yr_days)  / 12 
+                break;
+            case "Hourly Rate":
+                    monhtly_salary = ((empData.rate * empData.no_hours) * empData.total_yr_days)  / 12
+                break;
+            default:
+                break;
+        }
+        frm.set_value('monthly_salary', monhtly_salary)
+}
+
+async function printButton(frm){
+    const host = `${window.location.protocol}//${window.location.host}`;
+    if(frm.doc.workflow_state == "Approved"){
+        frm.add_custom_button(__("Print"), function(){
+            if(frm.doc.coe_type == 'COE with Annual Compensation'){
+                window.open(`${host}/printview?doctype=Certificate%20of%20Employment&name=${frm.doc.name}&trigger_print=1&format=COE%20with%20Annual%20Compensation&no_letterhead=0&_lang=en`)
+            }else if(frm.doc.coe_type == 'COE with Monthly Compensation'){
+                window.open(`${host}/printview?doctype=Certificate%20of%20Employment&name=${frm.doc.name}&trigger_print=1&format=COE%20w%20Compensation%20Present%20EE&no_letterhead=0&_lang=en`)
+            }
+            else if(frm.doc.coe_type == 'COE without Compensation'){
+                window.open(`${host}/printview?doctype=Certificate%20of%20Employment&name=${frm.doc.name}&trigger_print=1&format=COE%20without%20Compensation&no_letterhead=0&_lang=en`)
+            }
+            else if(frm.doc.coe_type == 'COE Plain Present EE'){
+                window.open(`${host}/printview?doctype=Certificate%20of%20Employment&name=${frm.doc.name}&trigger_print=1&format=COE%20Plain%20Present%20EE&no_letterhead=0&_lang=en`)
+            }else if(frm.doc.coe_type == 'COE Plain Former EE'){
+                window.open(`${host}/printview?doctype=Certificate%20of%20Employment&name=${frm.doc.name}&trigger_print=1&format=COE%20Plain%20Former%20EE&no_letterhead=0&_lang=en`)
+            }else{
+            
+            }
+        }).css({'background':'#7195C9','font-weight': 'bold','color':'white','outline': '1px solid grey'})
+    }
+}
