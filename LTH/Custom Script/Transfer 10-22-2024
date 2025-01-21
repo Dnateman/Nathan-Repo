@@ -1,0 +1,31 @@
+frappe.ui.form.on('Transfer', {
+	refresh(frm) {
+        hideHRInput(frm);
+       $('.fa.fa-print').hide()
+	},
+    before_load(frm) {
+        hideHRInput(frm);
+    },
+    onload(frm) {
+        // hideHRInput(frm);
+    },  
+    employee(frm){
+        automateFrom201(frm)
+    }
+});
+
+async function automateFrom201(frm){
+    let empData = await frappe.db.get_list('Employee', {filters:{'name': frm.doc.employee},fields: ["*"], limit: 10000})
+    console.log(empData[0].is_attendance_base)
+    frm.set_value("new_is_attendance_base", empData[0].is_attendance_base);
+    
+}
+//Hide HR Input if role does not include HR Staff
+function hideHRInput(frm){
+    let cur_user = frappe.session.user;
+    let roles = frappe.user_roles;
+    if(!roles.includes('HR Staff') && cur_user != 'Administrator' ){//
+        cur_frm.set_df_property("section_break_11", "hidden", 1);
+        cur_frm.set_df_property("section_break_19", "hidden", 1);
+    } 
+}

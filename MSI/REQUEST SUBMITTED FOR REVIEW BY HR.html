@@ -1,0 +1,102 @@
+<head>
+    <style>
+  
+    </style>
+  </head>
+  <body>
+      <main>
+          <div class="letter-a" style="padding:30px;">
+              <p style="font-size: 17px;"><b>Hello, HR Team and Admin Manager!</b></p>
+              <p style="font-size: 17px;">You have a new Movement Request for review with the following details</p>
+  
+              <h3 style="font-size: 26px; color: rgb(25, 73, 114);">Type of Movement: Increase Only</h3>
+              <div style="display: flex; justify-content: center;">
+                  <div style="margin-right: 10px;" >
+                      <table>
+                          <tr>
+                              <td style="width:100px; padding:  1% 1%;"> Email Address</td>
+                              <td><a href="#" target="_blank">charlesva@meditab.com</td>
+                          </tr>
+                          <tr>
+                              <td colspan="2" style="background-color: rgb(201, 201, 201); width:150px; padding: 1% 1%;"> Manager/Team Lead Request</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">ID number of employee you are requsting movement for:</td>
+                              <td>{{doc.employee}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">Full name of employee you are requsting movement for:</td>
+                              <td>{{doc.employee_name}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">What is the employee's current line of business (LOB)?</td>
+                              <td>{{doc.line_of_business}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">What is the employee's current team?</td>
+                              <td>{{frappe.db.get_value('Employee', doc.employee, 'department')}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">What is the employee's current position?</td>
+                              <td>{{frappe.db.get_value('Employee', doc.employee, 'position_title')}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">Name of Requesting Manager/Lead</td>
+                              <td>{{frappe.db.get_value('Employee', doc.employee, 'reports_to_name')}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">Proposed effective date of changes</td>
+                              <td>{{doc.effective_on}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">What movement are you requesting?</td>
+                              <td>Increase Only</td>
+                          </tr>
+                      </table>
+                  </div>
+                  <div style="margin-left: 10px;">
+                      <table>
+                          <tr>
+                              <td colspan="2"  style="background-color: rgb(201, 201, 201); width:100px; padding: 1% 1%;"> Promotion + increase</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">How much is the requested increase?</td>
+                              <td>{{doc.qone_}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">Who did you consult regarding this amount?</td>
+                              <td>{{doc.who_did_you_consult_regarding_this_amount}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">What is the reason for requesting this increase?</td>
+                              <td>{{doc.qthree}}</td>
+                          </tr>
+                          <tr>
+                        <td style="width:150px; padding:  1% 1%;">How will this movement help the business?</td>
+                              <td>{{doc.qfour}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">What is the new new job rank of the employee in terms of the new role?</td>
+                              <td>{{doc.qfour}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">Based on your expert evaluation, how has the employee's performance been?</td>
+                              <td>{{doc.qfive}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">What is your justification for the score you just gave?</td>
+                              <td>{{doc.qsix}}</td>
+                          </tr>
+                          <tr>
+                              <td style="width:150px; padding:  1% 1%;">Please provide the employee's monthly KPI score (or Evaluation score, if underwent structured training for the position) for the past 6 months.</td>
+                              <td>{{doc.qseven}}</td>
+                          </tr>
+                          <tr></tr>
+                          <tr></tr>
+                      </table>
+                  </div>
+              </div>
+
+          </div>
+      </main>
+  </body>

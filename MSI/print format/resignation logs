@@ -1,0 +1,117 @@
+<head>
+    <style>
+        p{
+            font-size: 14px;
+        }
+    </style>
+  </head>
+  <body>
+      <main>
+          <div class="letter-a" style="padding:60px;">
+              
+              <p>Hi, Team: </p>
+               <p>An employee is resigning and here are the details:</p>
+               <br>
+                <table style="width: 60%;">
+                    <tr>
+                       <!-- <td style="text-align: center; width: 30%; font-weight:bold">Name: </td> -->
+                        <!-- <td style="text-align: center; width: 55%;">{{doc.employee_name}} ({{doc.employee}})</td> -->
+                    </tr>
+                    <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Email address: </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{ doc.owner }}</td>
+                    </tr>
+                    <br>
+                    <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Name of resigning employee's Immediate Supervisor :</td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{ doc.immediate_supervisor_name }}</td>
+                    </tr>
+                    <br>
+                    <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Employee ID No:  </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{ doc.employee }}</td>
+                    </tr>
+                    <br>
+                    <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Employee Full Name:</td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{ doc.employee_name }}</td>
+                    </tr>
+                    <br>
+                     <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">LOB:  </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{doc.line_of_business}}</td>
+                    </tr>
+                    <br>
+                      <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Position:  </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{doc.position_title}}</td>
+                    </tr>
+                     <br>
+                      <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Effective Date:  </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{doc.effectivity_date_of_resignation}}</td>
+                    </tr>
+                    <br>
+                    <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Managed or Unmanaged?:  </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{doc.managed_or_unmanaged}}</td>
+                    </tr>
+                    <br>
+                     <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">General Reason for resigning: </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{% if doc.reason_for_resigning == "Others" %} {{ doc.others }}{% else %}{{ doc.reason_for_resigning }}{% endif %}</td>
+                    </tr>
+                    <br>
+                      <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Reason for resigning details:  </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{doc.primary_reason}}</td>
+                    </tr>
+                    <br>
+                      <tr>  
+                        <td style="text-align: center; width: 30%; font-weight:bold">Shall we retain or not?:  </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{doc.reason_for_resigning}}</td>
+                    </tr>
+                    <br>
+                     <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Why should we retain? or Why should we not?:  </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{doc.why_should_we_retain_or_why_should_we_not}}</td>
+                    </tr>
+                    <br>
+                     <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Is this employee Billable/Client Facing? <br> Meaning are their hours billed to the client? :  </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">{{doc.is_this_employee_billable}}</td>
+                    </tr>
+                    <br>
+                     <tr>
+                        <td style="text-align: center; width: 30%; font-weight:bold">Is this resignation approved for processing? We will send a resignation turnover agreement form if this is approved. :  </td>
+                        <td style="text-align: left; width: 15%;"></td>
+                        <td style="text-align: left; width: 55%;">  {{doc.approved_or_disapproved}}</td>
+                    </tr>
+                    <tr>
+                </table>
+                <br>
+                
+        <p><b>HR:</b></p>
+<p><b>Please loop in the required people to notify and process resignation turnover agreement form if this resignation is approved.</b>
+</p><br>
+<p><b>TL/Manager:</b></p>
+<p>Please submit a signed copy of this <b><a href="https://drive.google.com/file/d/1XVIDYFARskhWcRUYkunyrhvefCwUgAxI/view?usp=sharing">Resignation Turnover Agreement form</a></b> to HR <b>within 1 week from this report</b>. This is to get the member's commitment that they will complete turnover and required attendance while rendering last days.
+</p>
+<p>Thank you. </p>
+
+          </div>
+      </main>
+  </body>

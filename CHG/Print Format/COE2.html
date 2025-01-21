@@ -1,0 +1,88 @@
+<head>
+    <style>
+        p, a {
+            font-size: 16px;
+        }
+    </style>
+  </head>
+  <body>
+    <main>
+        <div class="letter-a" style="padding:60px;">
+            <br><br><br><br><br>
+            <h1 style="text-align: center; font-size: 24px; text-transform: uppercase;">
+                <b>CERTIFICATE OF EMPLOYMENT</b>
+            </h1>   
+            <br><br><br><br><br>
+            <p>
+                
+                This is to certify that <b>
+                {% if frappe.db.get_value("Employee", doc.employee, "gender") == 'Female' %}
+                    Ms. {{ frappe.db.get_value("Employee", doc.employee, "first_name").title() }}, {{ frappe.db.get_value("Employee", doc.employee, "last_name").title() }}
+                {% elif frappe.db.get_value("Employee", doc.employee, "gender") == 'Male' %}
+                    Mr. {{ frappe.db.get_value("Employee", doc.employee, "first_name").title() }}, {{ frappe.db.get_value("Employee", doc.employee, "last_name").title() }}
+                {% endif %}
+                </b> is a bonafide employee of <b>{{ frappe.db.get_value("Employee", doc.employee, "company") }}</b>{% if frappe.db.get_value("Employee", doc.employee, "company") == 'CHG GLOBAL INC.'%} (formerly WORLD BALANCE INTERNATIONAL INC.){% endif %},
+                as its {{ frappe.db.get_value("Employee", doc.employee, "position_title") }} from <b>{{ frappe.utils.formatdate(frappe.db.get_value("Employee", doc.employee, "date_hired"), 'MMMM dd, yyyy') }}</b> up to
+                present. {% if frappe.db.get_value("Employee", doc.employee, "gender") == 'Female' %}
+                She
+            {% elif frappe.db.get_value("Employee", doc.employee, "gender") == 'Male' %}
+                He
+            {% endif %} has an Annual Income of Php 
+
+            {% set rate_type = frappe.db.get_value("Employee", doc.employee, "rate_type") %}
+            {% set rate = frappe.db.get_value("Employee", doc.employee, "rate") %}
+            {% set history = frappe.get_all("Other Compensation and Benefits Table", filters={'parent':  doc.employee}, fields=['*']) %}
+            {% set total_days = frappe.db.get_value("Employee", doc.employee, "total_yr_days") %}
+            {% set calculated_amount = (rate * total_days / 12 * 13) + (id.get('amount') | float * 12) %}
+                {{calculated_amount}}
+
+            {% for id in history %}
+                {% if rate_type == 'Daily Rate' %}
+                    {% if id.get('transaction_type') == 'SA' and id.get('is_active') == 1 %}
+                        {{ "₱{:.2f}".format(calculated_amount) }}
+                    {% else %}
+                        {{ "₱{:.2f}".format(rate * total_days / 12 * 13) }}
+                    {% endif %}
+                {% elif rate_type == 'Monthly Rate' %}
+                    {% if id.get('transaction_type') == 'SA' and id.get('is_active') == 1 %}
+                        {{ "₱{:.2f}".format(rate * 13 + (id.get('amount') | float * 12)) }}
+                    {% else %}
+                        {{ "₱{:.2f}".format(rate * 13) }}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            
+            {% for id in history %}
+                {% if id.get('transaction_type') == 'COM.ALLOW' and id.get('is_active') == 1 %}
+                    COMMUNICATION ALLOWANCE of Php {{ "₱{:.2f}".format(id.get('amount')) }}.
+                {% endif %}
+            {% endfor %}
+            
+                <br><br><br>
+                This certification is being issued in favor of 
+                {% if frappe.db.get_value("Employee", doc.employee, "gender") == 'Female' %}
+                Ms. {{ frappe.db.get_value("Employee", doc.employee, "last_name").title() }}
+                {% elif frappe.db.get_value("Employee", doc.employee, "gender") == 'Male' %}
+                Mr. {{ frappe.db.get_value("Employee", doc.employee, "last_name").title() }}
+                {% endif %} for {{ doc.purpose }} Purposes. 
+                <br><br>
+                {% set day = frappe.utils.formatdate(doc.from_date, 'dd')|int %}
+                {% set suffix = 'th' %}
+                {% if day % 10 == 1 and day % 100 != 11 %}
+                    {% set suffix = 'st' %}
+                {% elif day % 10 == 2 and day % 100 != 12 %}
+                    {% set suffix = 'nd' %}
+                {% elif day % 10 == 3 and day % 100 != 13 %}
+                    {% set suffix = 'rd' %}
+                {% endif %}
+                Issued this {{ day }}<sup>{{ suffix }}</sup> day of {{ frappe.utils.formatdate(doc.from_date, 'MMMM yyyy') }} in 19 V. Mapa St. Caloocan City, Philippines. 
+            </p>
+            <br><br><br><br>
+            <a style="text-align: left;"><b>ALMA C. CARRIEDO </b><br>
+                HR Deputy Head <br>
+                Email add: alma.carriedo@chgglobal.com.ph
+            </a>
+        </div>
+    </main>
+  </body>
+  

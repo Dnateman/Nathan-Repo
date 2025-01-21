@@ -1,0 +1,57 @@
+frappe.ui.form.on('Certificate of Employment', {
+	refresh(frm) {
+        $('.fa.fa-print').hide() 
+        customButton(frm)
+	},
+    certified_by(frm){
+
+    },
+    onload(frm){
+        frm.set_query('certified_by', function() {
+            return {
+                filters: {
+                    full_name: 'CARRIEDO, ALMA COSTILLAS'
+                }
+            };
+        });
+    }
+})
+//Todo Create custom button
+function customButton(frm){
+    frm.add_custom_button(__(`<i class="fa fa-print" style="margin-right: 5px;"> Print Format</i>`), function() {
+            processSelectedOption(frm.doc.select_type, frm);
+    }).css({
+        'background-color': '#2C9041',
+        'color': 'white',
+        'border': 'none',
+        'padding': '5px 20px',
+        'text-align': 'center',
+        'text-decoration': 'none',
+        'display': 'inline-block',
+        'font-size': '12px',
+        'margin-top': '0px',
+        'cursor': 'pointer',
+        'border-radius': '4px'
+    }).attr('title', `Print ${frm.doc.select_type}`);;
+}
+
+function processSelectedOption(selected, frm) {
+    //Get the protocol and the location of the url
+    const host = `${window.location.protocol}//${window.location.host}`;
+    //Option url object    
+    const optionUrls = {
+        'New Certificate of Employment': 'http://people.navee.chgglobal.com.ph/printview?doctype=Certificate%20of%20Employment&name={{doc.name}}&trigger_print=1&format=CHG%20-%20New%20Certificate%20of%20Employment&no_letterhead=1',// "key" ; "Value" name of the print format
+        'Active Without Compensation': 'http://people.navee.chgglobal.com.ph/printview?doctype=Certificate%20of%20Employment&name={{doc.name}}&trigger_print=1&format=CHG%20-%20Active%20Without%20Compensation%20COE&no_letterhead=1',
+        'Resigned and Cleared': 'http://people.navee.chgglobal.com.ph/printview?doctype=Certificate%20of%20Employment&name={{doc.name}}&trigger_print=1&format=CHG%20-%20Resigned%20and%20Cleared%20COE&no_letterhead=1',
+        'Resigned and In-Process of Clearance': 'http://people.navee.chgglobal.com.ph/printview?doctype=Certificate%20of%20Employment&name={{doc.name}}&trigger_print=1&format=CHG%20-%20Resigned%20and%20In-Process%20of%20Clearance%20COE&no_letterhead=1',
+        'COE With Compensation': 'http://people.navee.chgglobal.com.ph/printview?doctype=Certificate%20of%20Employment&name={{doc.name}}&trigger_print=1&format=CHG%20-%20COE%20With%20Compensation&no_letterhead=1',
+        'COE for Seperated Employee-Tenure': 'http://people.navee.chgglobal.com.ph/printview?doctype=Certificate%20of%20Employment&name={{doc.name}}&trigger_print=1&format=CHG%20-%20COE%20for%20Separated%20Employee-Tenure&no_letterhead=1'
+    };
+    //https://osi-test.in:31780/printview?doctype=My%20Payslip&name=10ec73072c&trigger_print=1&format=My%20Payslip&no_letterhead=0&_lang=en
+
+    if (optionUrls.hasOwnProperty(selected)) {
+        const url = optionUrls[selected].replace('{{doc.name}}', frm.doc.name); // Replace the doc.name placeholder
+        window.open(url); // Open the formatted URL
+    }
+}
+

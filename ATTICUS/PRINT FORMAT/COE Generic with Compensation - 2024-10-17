@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        section{
+            padding-right:100px;
+            padding-left:100px;
+            font-size:14px;
+            margin-top:100px;
+        }
+        header{
+            width: 100%;
+            top: 0;
+        }
+        footer {
+            width: 100%;
+            height: auto;
+            bottom:0px;
+            padding:0;
+            display:block;
+        }
+        .tab1 {
+            display: inline-block;
+            margin-left: 60px;
+        }
+        .tabmini {
+            display: inline-block;
+            margin-left: 58px;
+        }
+        .tab2 {
+            display: inline-block;
+            margin-left: 146px;
+        }
+        .tab3 {
+            display: inline-block;
+            margin-left: 102px;
+        }
+        .tab4 {
+            display: inline-block;
+            margin-left: 155px;
+        }
+        .tab5 {
+            display: inline-block;
+            margin-left: 129px;
+        }
+        .tab6 {
+            display: inline-block;
+            margin-left: 41px;
+        }
+        .tab7 {
+            display: inline-block;
+            margin-left: 47px;
+        }
+
+    </style>
+
+    <body style="font-family: 'Times New Roman', Times, serif;">
+
+        <main>
+            <header>
+                <img src="/files/headeratticus.png">
+            </header>
+            <section>
+                <h2 style="text-align:center; font-size:22px;"><b>CERTIFICATE OF EMPLOYMENT</b></h2>
+    
+                <br>
+                <p>This is to certify that the individual indicated below is an employee of <b>{{ frappe.db.get_value("Employee", doc.employee, "company") }}</b>
+                    and that the details that follow are true and correct:</p>
+                    
+                <br>
+                
+                
+                <p><span class="tab1"></span>Employee Name <span class="tab3"></span> : <span class="tab1"></span>{{ frappe.db.get_value("Employee", doc.employee, "full_name") }}</p>
+                <p><span class="tab1"></span>Hire Date <span class="tab2"></span> : <span class="tab1"></span>{{frappe.utils.formatdate(frappe.db.get_value('Employee', doc.employee, 'date_hired'), 'MMMM dd, yyyy')}}</p>
+                <p><span class="tab1"></span>Position <span class="tab4"></span> : <span class="tab1"></span>{{ frappe.db.get_value("Employee", doc.employee, "position_title") }}</p>
+                <p><span class="tab1"></span>Department  <span class="tab5"></span> : <span class="tab1"></span> {% set dept = frappe.db.get_value('Employee', doc.employee, 'department') %}{% if dept != None %}{{dept}}{% endif %}</p>
+                <p><span class="tab1"></span>Total Monthly Basic Salary <span class="tab6"></span> : <span class="tabmini"></span>PHP
+                {% if frappe.db.get_value("Employee", doc.employee, "rate_type") == 'Daily Rate' %}
+                {{ "{:,.2f}".format(frappe.db.get_value("Employee", doc.employee, "rate") * frappe.db.get_value("Employee", doc.employee, "total_yr_days")/ 12)}}
+                {% elif frappe.db.get_value("Employee", doc.employee, "rate_type") == 'Hourly Rate' %}
+                {{ "{:,.2f}".format(frappe.db.get_value("Employee", doc.employee, "rate") * frappe.db.get_value("Employee", doc.employee, "no_hours")* frappe.db.get_value("Employee", doc.employee, "total_yr_days")/ 12)}}
+                {% else %}
+                {{ "{:,.2f}".format(frappe.db.get_value("Employee", doc.employee, "rate")) }}
+                {% endif %}</p>
+                
+                <p><span class="tab1"></span>Total Annual Basic Salary <span class="tab7"></span> : <span class="tabmini"></span>PHP
+                {{ "{:,.2f}".format(frappe.db.get_value("Employee", doc.employee, "rate") * 13)}}</p>
+                
+                <br>
+                
+                <p>This certification is being issued this <b>{{frappe.utils.formatdate(doc.posting_date, 'dd')}} day of {{frappe.utils.formatdate(doc.posting_date, 'MMMM, yyyy')}}</b>, {{ frappe.db.get_value("Employee", doc.employee, "location") }} for
+                    <b>{{doc.purpose}}</b> purposes.</p>
+
+                    <br>
+                <p><b>Certified by:</b></p><br>
+                <p>For and on behalf of {{ frappe.db.get_value("Employee", doc.employee, "company") }}.</p><br><br>
+
+                <p><b>Day Anicee Buen</b></p>
+                <p>Human Recourses Services Manager</p>
+                <p>Telephone Number: (02) 8542 6447</p>
+                <a href="#">hrservices@atticus.ph</a>
+                <br><br><br><br>
+
+            </section>
+            <footer>
+                <img src="/files/footeraais.png">
+            </footer>
+        </main>
+
+    </body>
+
+</html>
+

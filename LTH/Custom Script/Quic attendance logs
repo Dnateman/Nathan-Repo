@@ -1,0 +1,419 @@
+var cur_lat = 0;
+var cur_lon = 0;
+let server_datetime = new Date(getServerTime());
+
+frappe.ui.form.on("Quick Attendance Logs", {
+    async refresh(frm){
+        //await filterType(frm);
+    },
+    onload: async function(frm) {
+        let empID = frm.doc.employee
+        console.log('Emp ID',empID)
+        frm.enable_save();
+        frm.disable_save();
+        await cur_frm.set_df_property("type", "read_only", 1);
+        await cur_frm.set_df_property("employee", "read_only", 1);
+        if (frm.is_new()) {
+            frm.set_value('latitude', '')
+            frm.set_value('longitude', '')
+            await filterEmployeetoOwn(frm);
+            await updateRequestedTime(frm);
+            frm.enable_save();
+            await getLocation(frm);
+            cur_frm.set_df_property("type", "read_only", 0);
+            cur_frm.set_df_property("employee", "read_only", 0);
+        }
+        if (!frm.is_new()) {
+            frm.disable_save();
+        }
+    },
+    geolocation(frm) {
+        //console.log('map', frm.doc.geolocation);
+        let map = JSON.parse(frm.doc.geolocation);
+        //console.log('map', map);
+    },
+    async before_save(frm) {
+         updateRequestedTime(frm);
+
+        let _emp_details = await get_EmpDet(frm, frm.doc.employee); 
+        console.log(_emp_details)
+        let allowed_locs = await getAllowedLocations(frm);
+        let is_valid = [];
+        //console.log("allo", allowed_locs.length, allowed_locs )
+        if(allowed_locs.length != 0){
+            $.each(allowed_locs, async function(i, row) {
+                let loc_radius;
+                frappe.call({
+                    method: "frappe.client.get_value",
+                    args: {
+                            "doctype": "Branch",
+                            "filters": {"name": row.branch},
+                            "fieldname": ["radius"]
+                    },
+                    async: false,
+                     callback: function (data) {
+                        //console.log("Branch", data)
+                        loc_radius = data.message.radius;
+                    }
+                });
+
+                let loc_lat = row.latitude;
+                let loc_lon = row.longitude;
+                //console.log('row', row, "rad", loc_radius);
+                let dist = geoDistance(
+                    cur_lat,
+                    cur_lon,
+                    loc_lat,
+                    loc_lon
+                );
+                console.log('dist', dist ,">=", loc_radius);
+                if (dist > loc_radius) { //in km
+                    is_valid.push(false);
+                    //console.log('false')
+                } else {
+                    is_valid.push(true);
+                    //console.log('true')
+                }
+                //console.log('cur_lat', cur_lat);
+                //console.log('cur_lon', cur_lon);
+                //console.log('loc_lat',loc_lat);
+                //console.log('loc_lon',loc_lon);
+            });
+            //console.log('is_valid', is_valid);
+            //console.log("con", !is_valid.includes(true))
+            if(_emp_details[0].office_base == 1 && allowed_locs.length != 0){
+                if (!is_valid.includes(true)) {
+                    //console.log("block")
+                    frappe.msgprint({
+                        title: __('Error Message'),
+                        indicator: 'red',
+                        message: __("<strong>Your current location is outside the defined proximity of your allowed location(s). Please try again once you are at the site.</strong>.")
+                    });
+                    frappe.validated = false;
+                }
+            }
+        } else {
+            if(_emp_details[0].office_base == 1){
+                frappe.msgprint({
+                    title: __('Error Message'),
+                    indicator: 'red',
+                    message: __("<strong>No allowed location(s)</strong>.<hr> Contact HR.")
+                });
+                frappe.validated = false;
+             }
+        }
+        if(frm.doc.latitude == "" || frm.doc.longitude == ""){
+            frappe.msgprint({
+                title: __('Error Message'),
+                indicator: 'red',
+                message: __("<strong>Please make sure the location is reflected")
+            });
+            frappe.validated = false;
+        }
+    },
+    after_save: async function(frm, cdt, cdn){
+        if(frm.doc.type != 'Check In'){
+            if(frm.doc.type == 'Time In'){
+                createTC(frm, 0, frm.doc.target_date, frm.doc.time, "In");
+            } else if(frm.doc.type == 'Time Out'){
+                createTC(frm, 1, frm.doc.target_date, frm.doc.time, "Out");
+            } 
+            await frm.disable_save();
+        } else if (frm.doc.type == 'Check In'){
+            createTC(frm, 0, frm.doc.from_date, frm.doc.from_time, "In");
+            createTC(frm, 1, frm.doc.to_date, frm.doc.to_time, "Out");
+        }
+        await frm.reload_doc();
+    },
+    async employee(frm){
+        await filterType(frm);
+    },
+    async position_title(frm){
+        await filterType(frm);
+    },
+    async type(frm){
+        await updateRequestedTime(frm);
+    }
+});
+
+//get Employee Details by User ID
+async function get_EmpDetByUID(frm){
+    console.log("User: ", frappe.session.user)
+
+      let _empDet = [];
+      let emp_filters = {"user_id": frappe.session.user};
+      let emp_fields  = ["name", "full_name", "company", "location", "department", "cost_center", "biometrics_id", "office_base", "allow_one_time_card"]
+      let emp_data = await frappe.db.get_list("Employee",{filters: emp_filters, fields: ['*'], limit: 100});
+      var emp_type = typeof emp_data;
+      if(emp_type != 'undefined') {
+        _empDet = emp_data;
+      }
+    return _empDet
+}
+
+//Filter Employee to own Employee ID only
+async function filterEmployeetoOwn(frm){
+    if(frappe.session.user != 'Administrator'){
+        let _emp_details = await get_EmpDetByUID(frm);
+        
+        if(_emp_details.length != 0){
+            console.log(_emp_details[0].name)
+            
+            frm.set_value('employee', _emp_details[0].name);
+            
+            cur_frm.set_query("employee", function() {
+                return {
+                filters: [
+                    ["Employee", "name", "=", _emp_details[0].name]
+                ]
+                }
+            });
+        }   
+        
+    }
+}
+
+//Block if coordinates is null
+function blockIncompleteCoords(frm){
+    if(frm.doc.longitude == null || frm.doc.latitude == null){
+        frappe.msgprint({
+            title: __('Error Message'),
+            indicator: 'red',
+            message: __("<strong>Coordinates required.</strong> <hr>Reload and allow access to location.")
+        });
+        frappe.validated = false;
+    }
+}
+
+//Update Requested time to current time of server
+function updateRequestedTime(frm) {
+    if(frm.doc.type != 'Check In'){
+        frm.set_value('time', server_datetime.getHours() + ":" + server_datetime.getMinutes() + ":" + server_datetime.getSeconds());
+        frm.refresh_field('time');
+    } else {
+        //FROM DATE
+        frm.set_value('from_date', '2024-10-25');
+        frm.refresh_field('from_date');
+        //FROM TIME
+        frm.set_value('from_time','07:00:00');
+        frm.refresh_field('from_time');
+
+        let date = new Date(server_datetime);
+        const numOfHours = 8;
+        date.setTime(date.getTime() + numOfHours * 60 * 60 * 1000);
+        //TO DATE
+        frm.set_value('to_date', '2024-10-25');
+        frm.refresh_field('to_date');
+        //TO TIME
+        frm.set_value('to_time', '17:30:00');
+        frm.refresh_field('to_time');
+    }
+}
+
+function getServerTime() {
+    return $.ajax({async: false}).getResponseHeader( 'Date' );
+}
+
+//START GEO
+async function getAllowedLocations(frm) {
+    let allowed_locs = {};
+    let data = await frappe.db.get_doc('Employee', frm.doc.employee);
+    let al_data = data.allowed_location_table;
+
+    if(al_data.length != 0){
+        allowed_locs = al_data;
+    } 
+    return allowed_locs;
+}
+
+function geoDistance(lat1, lng1, lat2, lng2) {
+    const a = 6378.137; // equitorial radius in km
+    const b = 6356.752; // polar radius in km
+
+    var sq = (x) => x * x;
+    var sqr = (x) => Math.sqrt(x);
+    var cos = (x) => Math.cos(x);
+    var sin = (x) => Math.sin(x);
+    var radius = (lat) =>
+        sqr(
+            (sq(a * a * cos(lat)) + sq(b * b * sin(lat))) /
+            (sq(a * cos(lat)) + sq(b * sin(lat)))
+        );
+
+    lat1 = (lat1 * Math.PI) / 180;
+    lng1 = (lng1 * Math.PI) / 180;
+    lat2 = (lat2 * Math.PI) / 180;
+    lng2 = (lng2 * Math.PI) / 180;
+
+    var R1 = radius(lat1);
+    var x1 = R1 * cos(lat1) * cos(lng1);
+    var y1 = R1 * cos(lat1) * sin(lng1);
+    var z1 = R1 * sin(lat1);
+
+    var R2 = radius(lat2);
+    var x2 = R2 * cos(lat2) * cos(lng2);
+    var y2 = R2 * cos(lat2) * sin(lng2);
+    var z2 = R2 * sin(lat2);
+
+    return sqr(sq(x1 - x2) + sq(y1 - y2) + sq(z1 - z2)) * 1000;
+}
+
+async function getLocation(frm) {
+    console.log("geo", navigator.geolocation)
+    if (navigator.geolocation) {
+        await navigator.geolocation.getCurrentPosition(
+            function(position) {
+                //console.log("Your current position is:");
+                //console.log(`Latitude : ${position.coords.latitude}`);
+                //console.log(`Longitude: ${position.coords.longitude}`);
+                //console.log(`More or less ${position.coords.accuracy} meters.`);
+
+                cur_lat = position.coords.latitude;
+                cur_lon = position.coords.longitude;
+
+                //console.log(frm.doc);
+                //console.log(frm.doc.geolocation);
+                let geov = `{
+                    "type": "FeatureCollection",
+                    "features": [ {
+                            "type": "Feature",
+                            "properties": {},
+                            "geometry": { "type": "Point", "coordinates": [${position.coords.longitude}, ${position.coords.latitude}] }
+                        }
+                    ]
+                }`;
+                frm.set_value("geolocation", geov);
+                frm.set_value("latitude", cur_lat);
+                frm.set_value("longitude", cur_lon);
+                frm.refresh();
+            },
+            errorCallback, {
+                enableHighAccuracy: true,
+            }
+        );
+    } else {
+        frappe.throw("Geolocation is not supported by this browser.");
+    }
+}
+
+function errorCallback(error) {
+    //console.log(error);
+    switch (error.code) {
+        case error.PERMISSION_DENIED:
+            console.log("User denied the request for Geolocation.");
+            break;
+        case error.POSITION_UNAVAILABLE:
+            console.log("Location information is unavailable.");
+            break;
+        case error.TIMEOUT:
+            console.log("The request to get user location timed out.");
+            break;
+        case error.UNKNOWN_ERROR:
+            console.log("An unknown error occurred.");
+            break;
+    }
+}
+//END GEO
+
+//get Employee Details
+async function get_EmpDet(frm,name){
+    return new Promise(resolve => {
+      let _empDet = [];
+      let emp_filters = {"name": name};
+      let emp_fields  = ["name", "full_name", "company", "location", "department", "cost_center", "biometrics_id", "office_base", "allow_one_time_card"]
+      let emp_data = frappe.db.get_list("Employee",{filters: emp_filters, fields: emp_fields, limit: 100});
+      var emp_type = typeof emp_data;
+      console.log(emp_data)
+      if(emp_type != 'undefined') {
+        _empDet = emp_data
+      }
+      resolve(_empDet);
+    });
+}
+
+//Auto Create Time Card for Check In
+async function createTC(frm, _card_type, date, time, mess){
+    let _emp_details = await get_EmpDet(frm, frm.doc.employee); 
+
+    //console.log("check",_emp_details)
+    let bio_id =_emp_details[0].biometrics_id;
+    if(bio_id.length != 0 || _emp_details[0].biometrics_id != null){
+        var doc = {
+            doctype: "Time Card",
+            biometrics_id: _emp_details[0].biometrics_id,
+            card_type: _card_type,
+            date: date,
+            time: time,
+            linked_doctype: "Quick Attendance Logs",
+            linked_document: frm.doc.name
+        };
+
+        frappe.call({
+            method: "frappe.client.insert",
+            args: {"doc": doc}, // use JSON.parse(JSON.stringify(doc)) for parsing to json object
+            callback: function(r) {
+                if(r.exc) {
+                    frappe.msgprint({
+                        title: __('Error Message'),
+                        indicator: 'red',
+                        message: __("There were errors.")
+                    });
+                } else {
+                    frappe.msgprint({
+                        title: __('Message'),
+                        indicator: 'green',
+                        message: __("<b>Time " + mess + "</b> successfully created. <hr>" + r.message.name)
+                    });
+                    updateQALLinkedTC(frm,r.message.name);
+                }
+            }
+        });
+    } else {
+        frappe.msgprint({
+            title: __('Message'),
+            indicator: 'red',
+            message: __("Creation of Time Card failed. Biometrics ID is missing.")
+        });
+        frappe.validated = await false;
+    }
+}
+
+//Update Quick attendance logs Linked Time Card
+async function updateQALLinkedTC(frm,name) {
+    fetch("/api/resource/Quick Attendance Logs/" + frm.doc.name+ "", {
+        method: "PUT",
+        headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            "linked_time_card": name
+        })
+    })
+    .then(function(response) {
+        var success = response.ok
+        if (success == true){
+            console.log("Success")
+        } else {
+            return response.json();
+        }
+    })
+    .catch(function(error) {
+        console.log(error);
+    });
+    await frm.refresh_fields("linked_time_card");
+}
+
+//Show Check In to Position Title with Driver only
+async function filterType(frm){
+    let _emp_details = await get_EmpDet(frm, frm.doc.employee); 
+    console.log(_emp_details)
+    let user = frappe.session.user;
+    if(user != 'Administrator'){
+        if (_emp_details[0].allow_one_time_card == 1) {
+            cur_frm.set_df_property("type", "options", ["Check In"]);
+        } else {
+            cur_frm.set_df_property("type", "options", ["Time In", "Time Out"]);
+        }
+    }
+}

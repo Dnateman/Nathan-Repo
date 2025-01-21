@@ -1,0 +1,396 @@
+frappe.ui.form.on('Employee Info Update', {
+    refresh(frm) {
+        // Add your code here
+         hideAddressAndContact(frm)
+        // getFields(frm) 
+
+    },
+    async before_workflow_action(frm) {
+        if (frm.selected_workflow_action === 'Approve') {
+            await updateEmployeeMain(frm);
+            await updateFamilyMain(frm, frm.doc.new_family_members);
+        } else if (frm.selected_workflow_action === 'Cancel') {
+            await revertChangesMain(frm);
+            await updateFamilyMain(frm, frm.doc.current_family_members);
+        }
+    },
+    employee(frm) {
+        tick_checkbox(frm);
+    },
+    item_type(frm){
+        makeRequiredFields(frm)
+    },
+    new_sss_no(frm){
+        required_attachment(frm)
+    },
+    new_hdmf_no(frm){
+        required_attachment(frm)
+    },
+    new_phic_no(frm){
+        required_attachment(frm)
+    },
+    new_tin(frm){
+        required_attachment(frm)
+    }
+});
+
+frappe.ui.form.on('New EIU Family Info Table', {
+    refresh(frm) {
+        // your code here
+    },
+    full_name: function(frm,cdt,cdn){
+        var child = locals[cdt][cdn];
+    family(frm)
+
+    },
+    birthday: function(frm,cdt,cdn){
+        var child = locals[cdt][cdn];
+    family(frm)
+
+    }
+})
+
+async function tick_checkbox(frm) {
+    const employee_id = frm.doc.employee;
+    if (employee_id) {
+        try {
+            const employeeDoc = await frappe.db.get_doc('Employee', employee_id);
+            let is_solo_parent = employeeDoc.is_solo_parent;
+            let is_widowed = employeeDoc.is_widowed;
+
+            frm.set_value('current_is_solo_parent', is_solo_parent);
+            frm.set_value('current_is_widowed', is_widowed);
+            frm.refresh_field('current_is_solo_parent');
+            frm.refresh_field('current_is_widowed');
+
+            console.log("Employee ID:", employee_id);
+            console.log("Current is Solo Parent:", is_solo_parent);
+            console.log("Current is Widowed:", is_widowed);
+        } catch (error) {
+            console.error('Error fetching employee document:', error);
+        }
+    } else {
+        console.error('Employee ID is not set');
+    }
+}
+
+// Function to Format Government numbers [Dash Spacing]
+function governmentNumberFormat(number, type){
+    if(!number) return '';
+
+    switch(type){
+        case 'new_sss_no':
+            // format ng sss = ##-#######-#
+            number = number.replace(/\D/g, '').slice(0, 10);
+            return number.replace(/(\d{2})(\d{7})(\d{1})/, '$1-$2-$3');
+        case 'new_hdmf_no':
+            // format ng hdmf = ####-####-####
+            number = number.replace(/\D/g, '').slice(0, 12);
+            return number.replace(/(\d{4})(\d{4})(\d{4})/, '$1-$2-$3');
+        case 'new_phic_no':
+            // format ng phic = ##-#########-#
+            number = number.replace(/\D/g, '').slice(0, 12);
+            return number.replace(/(\d{2})(\d{9})(\d{1})/, '$1-$2-$3');
+        case 'new_tin':
+            // format ng tin = "###-###-###-###"
+            number = number.replace(/\D/g, '').slice(0, 12);
+            return number.replace(/(\d{3})(\d{3})(\d{3})(\d{3})/, '$1-$2-$3-$4');
+        default:
+            return number;
+    }
+}
+
+function governmentNumbersFormat(frm){
+    frm.set_value('new_sss_no', governmentNumberFormat(frm.doc.new_sss_no, 'new_sss_no'));
+    frm.set_value('new_hdmf_no', governmentNumberFormat(frm.doc.new_hdmf_no, 'new_hdmf_no'));
+    frm.set_value('new_phic_no', governmentNumberFormat(frm.doc.new_phic_no, 'new_phic_no'));
+    frm.set_value('new_tin', governmentNumberFormat(frm.doc.new_tin, 'new_tin'));
+}
+
+/* 
+1. Get fields to be updated
+2. Once the info update is approved, update in the 201
+*/
+
+/* GENERATE EMPLOYEE INFORMATION FUNCTIONS */
+// getEmployeeInformation: Get employee information document
+async function getEmployeeInformation(frm) {
+    if (frm.doc.employee) {
+        const employeeData = await frappe.db.get_doc("Employee", frm.doc.employee);
+        console.log("Employee Document: ", employeeData);
+        return employeeData;
+    }
+}
+
+// familyMembersMain: Main function for setting up employee current family members
+async function familyMembersMain(frm) {
+    if (frm.doc.item_type === "General and Personal Info") {
+        const familyData = await getCurrentFamilySetup(frm);
+        if (frm.doc.__islocal) {
+            await addFamilyMembers(frm, familyData, "current_family_members");
+            await addFamilyMembers(frm, familyData, "new_family_members");
+        }
+        console.log("Family Members: ", familyData);
+    }
+}
+//make the business required only if the item type is government numbers
+async function makeRequiredFields(frm) {
+    console.log(frm.doc.item_type === "Government Numbers")
+    if (frm.doc.item_type === "Government Numbers") {
+        frm.set_df_property('business_registered', 'reqd', 1);
+    }else{
+        frm.set_df_property('business_registered', 'reqd', 0);
+
+    }
+}
+
+async function required_attachment(frm) {
+    if (frm.doc.item_type === "Government Numbers") {
+    // Required Attachment
+    console.log(frm.doc.new_sss_no != null)
+        if(frm.doc.new_sss_no != null){
+            frm.set_df_property('sss_id', 'reqd', 1);
+            frm.set_value('new_sss_no', governmentNumberFormat(frm.doc.new_sss_no, 'new_sss_no'));
+
+        }else{
+        frm.set_df_property('sss_id', 'reqd', 0);
+        }
+        if(frm.doc.new_hdmf_no){
+            frm.set_value('new_hdmf_no', governmentNumberFormat(frm.doc.new_hdmf_no, 'new_hdmf_no'));
+            frm.set_df_property('hdmf_id', 'reqd', 1);
+        }else{
+            frm.set_df_property('hdmf_id', 'reqd', 0);
+        }
+        if(frm.doc.new_phic_no != null){
+            frm.set_value('new_phic_no', governmentNumberFormat(frm.doc.new_phic_no, 'new_phic_no'));
+            frm.set_df_property('phic_id', 'reqd', 1);
+        }else{
+            frm.set_df_property('phic_id', 'reqd', 0);
+        }
+        if(frm.doc.new_tin != null){
+            frm.set_value('new_tin', governmentNumberFormat(frm.doc.new_tin, 'new_tin'))
+            frm.set_df_property('tin_id', 'reqd', 1);
+        }else{
+            frm.set_df_property('tin_id_id', 'reqd', 0);
+        }
+        if(frm.doc.new_tin != null){
+            frm.set_df_property('validated_tin_id', 'reqd', 1);
+        }else{
+            frm.set_df_property('validated_tin_id', 'reqd', 0);
+        }
+    }
+    }
+async function family(frm) {
+    // Ensure item_type is defined and matches "Employee Contact Info"
+    if (frm.doc.item_type === "Employee Contact Info") {
+        // Access the child table data directly from the parent document
+        let family_members = frm.doc.new_family_table || []; // Replace 'family_members_eiu' with your actual child table field name
+        console.log(family_members)
+        console.log(family_members.length > 0)
+        // If there are family members, mark the field as required
+        if (family_members.length == 1) {
+            frm.set_df_property('birth_certificate_of_employees_relative_1', 'reqd', 1);
+            refresh_field(family_members);
+        }
+        if (family_members.length == 2) {
+            frm.set_df_property('birth_certificate_of_employees_relative_1', 'reqd', 1);
+            frm.set_df_property('birth_certificate_of_employees_relative_2', 'reqd', 1);
+        }
+        if (family_members.length == 3) {
+
+            frm.set_df_property('birth_certificate_of_employees_relative_1', 'reqd', 1);
+            frm.set_df_property('birth_certificate_of_employees_relative_2', 'reqd', 1);
+            frm.set_df_property('birth_certificate_of_employees_relative_3', 'reqd', 1);
+        }
+    }
+}
+
+
+// getCurrentFamilySetup: Get current family members
+async function getCurrentFamilySetup(frm) {
+    const employeeData = await getEmployeeInformation(frm);
+    return employeeData.family_members || [];
+}
+
+// addFamilyMembers: Add family members to table
+async function addFamilyMembers(frm, familyMembers, tableName) {
+    frm.clear_table(tableName);
+    familyMembers.forEach(member => {
+        frm.add_child(tableName, {
+            full_name: member.full_name,
+            birthday: member.birthday,
+            relationship: member.relationship,
+            fm_contact: member.fm_contact,
+            is_dependent: member.is_dependent,
+            is_pwd: member.is_pwd,
+            adult: member.adult,
+            is_qualified_dependent: member.is_qualified_dependent
+        });
+    });
+    frm.refresh_fields(tableName);
+}
+
+/* UPDATE EMPLOYEE FAMILY MEMBERS FUNCTIONS */
+// updateFamilyMain: Main function for updating family members
+async function updateFamilyMain(frm, familyTable) {
+    if (frm.doc.item_type === "General and Personal Info") {
+        const familyData = await scanFamilyDocs(frm, await getEmployeeInformation(frm), familyTable);
+        if (familyData) await updateEmployee(frm, familyData, "frappe.client.insert_many");
+    }
+}
+
+// scanFamilyDocs: Get family docs to be deleted and new family docs
+async function scanFamilyDocs(frm, employeeData, familyTable) {
+    const docsList = [];
+    if (employeeData) {
+        for (const member of employeeData.family_members) {
+            await deleteFamilyDocs(frm, member.doctype, member.name);
+        }
+    }
+    if (familyTable) {
+        familyTable.forEach(member => {
+            docsList.push({
+                doctype: "Family Members",
+                full_name: member.full_name,
+                birthday: member.birthday,
+                relationship: member.relationship,
+                fm_contact: member.fm_contact,
+                is_dependent: member.is_dependent,
+                is_pwd: member.is_pwd,
+                is_qualified_dependent: member.is_qualified_dependent,
+                parent: frm.doc.employee,
+                parenttype: "Employee",
+                parentfield: "family_members"
+            });
+        });
+    } else {
+        console.log("No Family Members Found");
+    }
+    return docsList;
+}
+
+// deleteFamilyDocs: Delete family docs
+async function deleteFamilyDocs(frm, doctype, name) {
+    await frappe.call({
+        method: 'frappe.client.delete',
+        args: { doctype, name },
+        callback: () => console.log('Successfully Deleted')
+    });
+}
+
+/* GET FORM FIELDS FUNCTIONS */
+// getFormFields: Get form fields with existing values to update the employee document
+async function getFormFields(frm, startsWith) {
+    const section = frm.fields_dict;
+    const fieldsData = [];
+    Object.values(frm.fields_dict).forEach(row => {
+        const fieldsList = section[row.df.fieldname]?.fields_list || [];
+        fieldsList.forEach(field => {
+            const fieldName = field.df.fieldname;
+            if (fieldName.startsWith(startsWith) && !["amended_from", "new_family_members", "current_family_members"].includes(fieldName)) {
+                fieldsData.push(fieldName);
+            }
+        });
+    });
+    console.log(fieldsData);
+    return fieldsData;
+}
+
+/* UPDATE EMPLOYEE 201 FUNCTIONS */
+// updateEmployeeMain: Main function to update the employee 201
+async function updateEmployeeMain(frm) {
+    const fieldsToUpdate = await getFieldsToUpdate(frm);
+    console.log(fieldsToUpdate);
+    await updateEmployee(frm, fieldsToUpdate, "frappe.client.bulk_update");
+    console.log("Fields: ", fieldsToUpdate);
+}
+
+// getFieldsToUpdate: Get fields with values to update
+async function getFieldsToUpdate(frm) {
+    const docsList = [];
+    const addressFields = ['new_address', 'new_address_postal_code'];
+    const fieldsList = { doctype: "Employee", docname: frm.doc.employee };
+    const formData = await getFormFields(frm, 'new_');
+    formData.forEach(field => {
+        if (frm.doc[field] !== undefined && frm.doc[field] !== "") {
+            const fieldName = addressFields.includes(field) ? field.replace("new_", "current_") : field.replace("new_", "");
+            fieldsList[fieldName] = frm.doc[field];
+        }
+    });
+    docsList.push(fieldsList);
+    console.log(docsList);
+    return docsList;
+}
+
+// revertChangesMain: Revert changes made to employee records
+async function revertChangesMain(frm) {
+    const fieldsToRevert = await getFieldsToRevert(frm);
+    await updateEmployee(frm, fieldsToRevert, "frappe.client.bulk_update");
+    console.log("Fields: ", fieldsToRevert);
+}
+
+// getFieldsToRevert: Revert changes using the fields in the form
+async function getFieldsToRevert(frm) {
+    const docsList = [];
+    const addressFields = ['current_address', 'current_address_postal_code'];
+    const fieldsList = { doctype: "Employee", docname: frm.doc.employee };
+    const formData = await getFormFields(frm, 'current_');
+    formData.forEach(field => {
+        const fieldName = field.replace("current_", "");
+        fieldsList[fieldName] = frm.doc[field] || "";
+    });
+    docsList.push(fieldsList);
+    return docsList;
+}
+
+// updateEmployee: Update the employee records based on the new fields
+async function updateEmployee(frm, data, callMethod) {
+    console.log(data);
+    await frappe.call({
+        method: callMethod,
+        args: { docs: data },
+        callback: response => {
+            console.log("Document Updated: ", response.message);
+            frappe.msgprint(__("Updated Records"));
+        },
+        error: response => {
+            console.log("Error Occurred: ", response.error);
+            frappe.validated = false;
+        }
+    });
+}
+
+
+
+    const hideAddressAndContact = async (frm ) =>{
+        const deliveryDateData = await frappe.db.get_doc('Delivery Date Matrix', 'Delivery Date Matrix');
+        const last_date_of_delivery = deliveryDateData.last_date_of_delivery;
+        var empty = ""
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        console.log(formattedDate); // Outputs: '2024-06-24'
+
+        console.log(last_date_of_delivery)// Outputs: '2024-06-20'
+
+        if(formattedDate > last_date_of_delivery){
+            frm.toggle_display( "new_employee_contact_number",frm.doc.Employee_Info_Update, true);
+            frm.toggle_display( "new_address_postal_code",frm.doc.Employee_Info_Update, true);
+            frm.toggle_display( "new_permanent_address",frm.doc.Employee_Info_Update, true);
+            frm.toggle_display( "new_permanent_address_postal_code",frm.doc.Employee_Info_Update, true);
+
+            if(frm.doc.new_current_address != ""){
+                frappe.model.set_value(
+                    frm.Employee_Info_Update,
+                    frm.new_current_address,
+                    "new_current_address",
+                    empty
+                );
+
+
+
+            frm.toggle_display( "new_current_address",frm.doc.Employee_Info_Update, true);
+            frm.refresh_field("frm.doc.new_current_address")
+            }
+        }
+    }
+    

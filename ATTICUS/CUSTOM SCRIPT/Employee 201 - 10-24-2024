@@ -1,0 +1,136 @@
+frappe.ui.form.on('Employee', {
+	refresh(frm) {
+		// your code here
+		//hideFields(frm)
+        toggle_read_only_main(frm)
+	},
+    onload(frm) {
+        toggle_read_only_main(frm)
+    },
+    non_taxable_allowance:  async function(frm){
+        let total = frm.doc.rate + parseFloat(frm.doc.non_taxable_allowance)
+        frm.set_value('total_salary',total)
+    },
+    rate:  async function(frm){
+        let total = frm.doc.rate + parseFloat(frm.doc.non_taxable_allowance)
+        frm.set_value('total_salary',total)
+    },
+    date_hired: function(frm){
+        monthsInService(frm)
+    },
+    refresh(frm) {
+        // Also trigger monthsInService when the form is refreshed
+        monthsInService(frm);
+    },
+    onload(frm) {
+        // Trigger monthsInService when the form loads
+        monthsInService(frm);
+    },
+})
+
+//TODO: CREATE A FUNCTION TO GET THE CURRENT LOGGED USER ROLE
+async function getCurrentLoggedUserRole(frm){
+   await frappe.user_roles 
+}
+
+//TODO:CREATE A FUNCTION THAT MAKES ALL THE READ-ONLY IF THE CURRENT LOGGED IN USER ROLE IS HRBP OR IMMEDIATE HEAD
+async function hideFields(frm) {
+    const hideFieldsFor = ['HRBP', 'Immediate Head'];
+    const userRolesData = getCurrentLoggedUserRole(frm);
+    const roleMatched = userRolesData.find(role => hideFieldsFor.includes(role));
+
+    if(roleMatched){
+        console.log('Role Matched')
+        
+    }
+}
+
+/* TOGGLE READ-ONLY FIELDS FUNCTIONS */
+//toggle_read_only_main func: main function for setting read-only access for HR when editting self record
+async function toggle_read_only_main(frm) {
+    if(frappe.user.name == "Administrator") {
+        return
+    }
+
+    let user_data = await get_logged_user_data(frm)
+        await set_fields_property(frm, user_data)
+}
+
+//get_logged_user_data func: retrieves current logged user session data
+async function get_logged_user_data(frm) {
+    let user = frappe.user_defaults.Employee
+    console.log(user)
+    return user
+}
+
+//set_fields_property func: sets field property to read_only
+async function set_fields_property(frm, user) {
+    if(user == frm.doc.name) {
+        $.each(frm.fields_dict, function(i,row) {
+            frm.set_df_property(i, 'read_only', 1)
+        })
+    }
+}
+function monthsInService(frm) {
+    var start_date = new Date(frm.doc.date_hired);
+    var first_day = new Date(start_date.getFullYear(), start_date.getMonth(), start_date.getDate(), 1);
+    var start_year = new Date(first_day).getFullYear();
+    var start_month = new Date(first_day).getMonth();
+    var start_day = new Date(first_day).getDate();
+    let end_day, end_month, end_year;
+
+    if (!frm.doc.date_resigned) {
+        // present day
+        var date = new Date();
+        var last_day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        end_year = new Date(last_day).getFullYear();
+        end_month = new Date(last_day).getMonth();
+        end_day = new Date(last_day).getDate();
+    } else {
+        // resigned
+        var date = new Date(frm.doc.date_resigned);
+        var last_day = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 1);
+        end_year = new Date(last_day).getFullYear();
+        end_month = new Date(last_day).getMonth();
+        end_day = new Date(last_day).getDate();
+    }
+
+    // Calculate total months
+    var months = end_month - start_month + (12 * (end_year - start_year));
+    
+    console.log(end_day, start_day)
+    // Adjust for day difference
+    if (end_day < start_day) {
+        months--;
+    }
+    console.log("months", months)
+    months = (months % 12 )
+    if(months != frm.doc.months_in_service){
+        console.log("months in service must be changed")
+
+    // Ensure months don't go negative and handle full years
+    if (months < 0) {
+        months = 0;
+    } else {
+        frm.doc.months_in_service = months
+        }
+        
+        frm.refresh_field('months_in_service')
+    }
+
+    // Only update if there's a difference
+    if (months != frm.doc.months_in_service) {
+        frm.doc.months_in_service = months;
+        frm.refresh_field('months_in_service');
+    }
+}
+
+
+/* END TOGGLE READ-ONLY FIELDS FUNCTIONS */
+
+/*===============================================================================================================
+NOTE: Use Blackbox AI to explain this code line by line or function by function if comments are unclear 
+Change Logs:
+    Date:               PIC:                    Remarks:
+    2024-07-09          EJL                     Added read_only functions for HR users on self edit
+=================================================================================================================*/

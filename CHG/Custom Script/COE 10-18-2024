@@ -1,0 +1,163 @@
+frappe.ui.form.on('Certificate of Employment', {
+    refresh(frm) {
+
+    },
+    employee(frm){
+        frm.set_value('amount', '');
+        getcompensation_benefits(frm)
+    },
+    onload(frm) {
+        frm.set_value('comallow', '');
+        frm.set_value('comfield', '');
+        frm.set_query('certified_by', function() {
+            return {
+                filters: {
+                    full_name: 'CARRIEDO, ALMA COSTILLAS'
+                }
+            };
+        });
+
+        
+    }
+    });
+// Get the total amount of Other Compensation and Benefits Table for a specific employee
+async function getcompensation_benefits(frm) {
+
+    await getcomallow(frm)
+
+    let computed_amount;
+    console.log('Employee ID', frm.doc.employee)
+                                         
+    /* get the field rate , total_yr_days and rate_type from employee doctype */
+    let salary_data = await frappe.db.get_list("Employee", {
+        filters: {'name': frm.doc.employee}, 
+        fields: ['*'], 
+        limit: 1000000
+    });
+    //check the value of salary_data if not empty
+    console.log('Salary Data', salary_data)
+
+    // get field from child table
+    let filters = { 'parent': frm.doc.employee , 'transaction_type': ['in', ['SA', 'HA','COM.ALLOW']]};
+    let data = await frappe.db.get_list("Other Compensation and Benefits Table", { filters: filters, fields: ["*"], limit: 150 });
+    console.log("Data", data)
+    // if the other compensation and benefits child table is empty or no transaction that is equal to SA and HA 
+    if (data === undefined) {
+        // If data is empty, handle based on rate_type
+        console.log('No data found for the employee.');
+        
+        if (salary_data[0].rate_type == 'Daily Rate') {
+            computed_amount = (salary_data[0].rate * salary_data[0].total_yr_days) / 12 * 13;
+            frm.set_value('amount', computed_amount);
+        } else if (salary_data[0].rate_type == 'Monthly Rate') {
+            computed_amount = (salary_data[0].rate * 13);
+            frm.set_value('amount', computed_amount);
+        }
+    
+        // clear fields compensation allowance and compensation transation code
+        frm.set_value('comallow', '');
+        frm.set_value('comfield', '');
+    } else {
+        // Loop through the data if not empty
+        for (let i = 0; i < data.length; i++) {
+            console.log('i', i, 'Data', data, 'Data[i]', data[i]);
+            console.log(data[i].parent === frm.doc.employee);
+    
+            if (data[i].parent === frm.doc.employee) {
+                console.log(salary_data[0].rate_type);
+                const baseAmount_daily = (salary_data[0].rate * salary_data[0].total_yr_days) / 12 * 13;
+                const baseAmount_monthly = salary_data[0].rate * 13;
+                
+                if (salary_data[0].rate_type === 'Daily Rate') {
+                    const daily_computed_amount = baseAmount_daily + parseFloat(frm.doc.compensation_allowance);
+                    
+                    if ((data[i].transaction_type === "SA" || data[i].transaction_type === "HA") && data[i].is_active == 1) {
+                        console.log("bakit1");
+                        computed_amount = daily_computed_amount;
+                    } else {
+                        console.log("bakit");
+                        computed_amount = baseAmount_daily;
+                    }
+                    frm.set_value('amount', parseFloat(computed_amount));
+                    console.log(computed_amount);
+
+                } else if (salary_data[0].rate_type === 'Monthly Rate') {
+                    const daily_computed_amount = baseAmount_monthly + parseFloat(frm.doc.compensation_allowance);
+                    console.log({
+                        'Is Active': data[i].is_active,
+                        'SA or HA': data[i].transaction_type === "SA" || data[i].transaction_type === "HA",
+                        'Transaction Type': data[i].transaction_type
+                    });                    
+                    if ((data[i].transaction_type === "SA" || data[i].transaction_type === "HA") && data[i].is_active == 1) {
+                        console.log("True");
+                        computed_amount = daily_computed_amount;
+                    } else {
+                        console.log('False')
+                        console.log('Base Monthly', baseAmount_monthly)
+                        computed_amount = baseAmount_monthly;   
+                    }
+                    console.log("bakit ayaw",daily_computed_amount )
+                    frm.set_value('amount', parseFloat(computed_amount));
+                    console.log(computed_amount);
+                }
+
+            }
+        }
+    }
+    
+
+
+}
+//communication allowance
+async function getcomallow(frm) {
+
+    let filters = { 'parent': frm.doc.employee};
+    let data = await frappe.db.get_list("Other Compensation and Benefits Table", { filters: filters, fields: ["*"], limit: 150 });
+
+    let sa_amount = 0;
+    let ha_amount = 0;
+
+
+        // Loop through the data to sum amounts for SA and HA transactions
+        if (Array.isArray(data)) {
+            data.forEach((item) => {
+                if (item.is_active == 1) {
+                    if (item.transaction_type == "SA") {
+                        sa_amount += item.amount; // Sum SA amounts
+                        //frm.set_value('compensation_sa', sa_amount)
+
+                    } else if (item.transaction_type == "HA") {
+                        ha_amount += item.amount; // Sum HA amounts
+                        //frm.set_value('compensation_ha', ha_amount)
+                    }
+                }
+            });
+        } else {
+            console.error("No valid compensation data found.");
+        }
+        // convert the sa amount to float
+        let total_compensation_for_sa_amount = parseFloat(sa_amount.toString().replace(/,/g, '')).toFixed(2);
+        let total_compensation_for_ha_amount = parseFloat(ha_amount.toString().replace(/,/g, '')).toFixed(2);
+        console.log(total_compensation_for_sa_amount + total_compensation_for_ha_amount)
+
+
+        let saAnnual = parseFloat(total_compensation_for_sa_amount).toFixed(2) * 12
+        let haAnnual = parseFloat(total_compensation_for_ha_amount).toFixed(2) * 12
+        console.log('sa amount', sa_amount)
+        console.log("sa annual", saAnnual)
+        console.log("ha annual", haAnnual)
+        //console.log("Total Annual Compensation", total_annual)
+        console.log("ha_amount", ha_amount)
+        console.log("TOTAL ANNUAL COMPENSATION", saAnnual + haAnnual)
+        frm.set_value('compensation_allowance', saAnnual + haAnnual)
+
+
+    for(i in data){
+        if(data[i].transaction_type == 'COM.ALLOW' && data[i].is_active == 1){
+            frm.set_value('comallow', data[i].amount * 12)
+            frm.set_value('comfield', data[i].transaction_type)
+        }else{
+
+        }
+    }
+}

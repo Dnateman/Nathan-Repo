@@ -1,0 +1,257 @@
+<head>
+	<style type="text/css">
+    </style>
+</head>
+<body>
+    <table style="line-height: 8pt">
+        <tr style="height:20pt">
+            <td colspan="4" style="width:369.65pt;">
+                <img src='/files/DGCDd900d3.png' style="height: 60px; display: block; position: relative; margin: 0pt !important; padding: 0pt !important">
+               <strong><em><h6 style="font-size:9.5pt; margin: 0pt !important; padding: 0pt !important ">Please answer each question completely.</h6></em></strong>
+            </td>
+            <td style="width:152.6pt; border-style:solid; border-width:1pt; vertical-align:top">
+                <strong><em><center>APPLICATION FOR MEDICAL PLAN</center></em></strong>
+            </td>
+        </tr>
+        <tr style="height:20pt">
+            <td colspan="4" style="width:15.05pt;border-left:1px solid black; border-top-style:solid; border-top-width:1pt; border-left-width:1pt; ">
+                <span style=" font-size:8.5pt">FULL NAME OF PRINCIPAL MEMBER</span>
+            </td>
+            <td style="width:152.6pt; border-left: 1pt solid black; border-right: 1pt solid black; border-top: 1pt solid black">
+                <span style=" font-size:8.5pt; letter-spacing:-0.1pt">CATEGORY</span>
+            </td>
+        </tr>
+        <tr style="height:19pt">
+            <td colspan="2" style="width:153.05pt; border-left-style:solid; border-left-width:1pt; border-bottom-style:solid; border-bottom-width:1pt;">
+                <p style="font-size:8.5pt; text-align:center">
+                    <span style="font-family:'Times New Roman'">{{ frappe.db.get_value("Employee", doc.employee, "last_name")}} </span>
+                </p>
+                <p style="margin-top:0pt; line-height:5pt; text-align:center">
+                    <em><span style="font-size:7.5pt;">Last Name</span></em>
+                </p>
+            </td>
+            <td style="width:153.05pt; border-bottom-style:solid; border-bottom-width:1pt;">
+                <p style="font-size:8.5pt; text-align:center">
+                    <span style="font-family:'Times New Roman'">{{ frappe.db.get_value("Employee", doc.employee, "first_name")}} </span>
+                </p>
+                <p style="margin-top:0pt; line-height:5pt; text-align:center">
+                    <em><span style="font-size:7.5pt;">First Name</span></em>
+                </p>
+            </td>
+            <td style="width:153.05pt; border-bottom-style:solid; border-bottom-width:1pt;">
+                <p style="font-size:8.5pt; text-align:center">
+                    <span style="font-family:'Times New Roman'">{{ frappe.db.get_value("Employee", doc.employee, "middle_name")}} </span>
+                </p>
+                <p style="margin-top:0pt; line-height:5pt; text-align:center">
+                    <em><span style="font-size:7.5pt;">Middle Name</span></em>
+                </p>
+            </td>
+            <td style="width:153.05pt; border-bottom:1pt solid black;border-left:1pt solid black; border-right: 1pt solid black">
+                <p style="font-size:8.5pt; text-align:center">
+                    <span style="font-family:'Times New Roman'"><center>{{ doc.corporate_medical_plan_package }}</center></span>
+                </p>
+            </td>
+        </tr>
+        <tr style="height:30.5pt">
+            <td colspan="2" style="width:152.55pt; border-style:solid; border-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; display: block;">DATE OF BIRTH</span> <center>{{ frappe.utils.formatdate( doc.date_of_birth, 'MMMM dd, yyyy') }}</center>
+            </td>
+            <td colspan="2" style="width:215.6pt; border-style:solid; border-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; display: block;">PLACE OF BIRTH</span><center>{% if doc.place_of_birth == None %}{% else %}{{ doc.place_of_birth}}{% endif %}</center>
+            </td>
+            <td style="width:152.6pt; border-style:solid; border-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; letter-spacing:-0.1pt; display: block;">NATIONALITY</span> <center>{% if doc.nationality == None %}{% else %}{{ doc.nationality }}{% endif %}</center>
+            </td>
+        </tr>
+        <tr style="height:9.6pt">
+            <td rowspan="3" style="width:60.4pt; border-style:solid; border-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; letter-spacing:-0.25pt; display: block">AGE</span> <center>{{ doc.age }} </center>
+                </p>
+            </td>
+            <td style="width:91.15pt; border-top-style:solid; border-top-width:1pt; border-right-style:solid; border-right-width:1pt; border-left-style:solid; border-left-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; letter-spacing:-0.25pt">SEX</span>
+            </td>
+            <td style="width:142.7pt; border-top-style:solid; border-top-width:1pt; border-left-style:solid; border-left-width:1pt; vertical-align:top">
+              <span style=" font-size:8.5pt">CIVIL STATUS</span>
+            </td>
+            <td style="width:72.9pt; border-top-style:solid; border-top-width:1pt; border-right-style:solid; border-right-width:1pt; vertical-align:top">
+                &nbsp;
+            </td>
+            <td rowspan="3" style="width:152.6pt; border-style:solid; border-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; letter-spacing:-0.1pt; display: block">RELIGION</span> {{ doc.religion }}
+            </td>
+        </tr>
+        <tr>
+            <td style="width:60.pt; border-right-style:solid; border-right-width:1pt; border-left-style:solid; border-left-width:1pt; vertical-align:top; padding-left:15pt">
+                {% if doc.sex == 'Female'%} ☑ {%else%} ☐ {% endif %} Female 
+            </td>
+            <td style="width:60pt; border-left-style:solid; border-left-width:1pt; vertical-align:top;padding-left:15pt">
+                {% if doc.civil_status == 'Single'%} ☑ {%else%} ☐ {% endif %}  Single
+            </td>
+            <td style="width:72.9pt; border-right-style:solid; border-right-width:1pt; vertical-align:top;padding-left:15pt">
+                {% if doc.civil_status == 'Widowed'%} ☑ {%else%} ☐ {% endif %}  Widowed
+            </td>
+        </tr>
+        <tr>
+            <td style="width:60.pt; border-right-style:solid; border-right-width:1pt; border-left-style:solid; border-left-width:1pt; vertical-align:top; padding-left:15pt">
+                {% if doc.sex == 'Male'%} ☑ {%else%} ☐ {% endif %} Male 
+             </td>
+            <td style="width:142.7pt; border-left: 1pt solid black; border-bottom-width:1pt; vertical-align:top">
+                {% if doc.civil_status == 'Married'%} ☑ {%else%} ☐ {% endif %} Married 
+            </td>
+            <td style="width:72.9pt; border-right-style:solid; border-right-width:1pt; border-bottom-style:solid; border-bottom-width:1pt; vertical-align:top">
+               {% if doc.civil_status == 'Separated'%} ☑ {%else%} ☐ {% endif %} Separated 
+            </td>
+        </tr>
+        <tr style="height:30.5pt">
+            <td colspan="4" style="width:369.15pt; border-style:solid; border-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; letter-spacing:-0.1pt; display: block">ADDRESS</span> {% if doc.address == None %}{% else %}{{ doc.address }}{% endif %}
+            </td>
+            <td style="width:152.6pt; border-style:solid; border-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; display: block">CONTACT NUMBER/S</span>{% if doc.contact_number == None %} {% else %}{{ doc.contact_number }}{% endif %}
+            </td>
+        </tr>
+        <tr style="height:30.5pt">
+            <td colspan="2" style="width:152.55pt; border-style:solid; border-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; letter-spacing:-0.1pt; display: block">POSITION</span> {{ doc.position }}
+            </td>
+            <td colspan="2" style="width:215.6pt; border-style:solid; border-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; letter-spacing:-0.1pt; display: block">COMPANY/BRANCH</span> {{doc.company}} {{doc.branch}}
+            </td>
+            <td style="width:152.6pt; border-style:solid; border-width:1pt; vertical-align:top">
+                    <span style=" font-size:8.5pt; display: block">EMPLOYMENT DATE</span> {{frappe.utils.formatdate(doc.employment_date, 'MMMM dd, yyyy')}}
+            </td>
+        </tr>
+    </table>
+    <div style="padding: 0pt 20pt">
+    <h5><i><b>Fill this portion up only for DEPENDENTS who will be covered.</b></i></h5>
+
+    <table style="text-align:center; border-spacing: 50px 0px !important;line-height: 7pt"> 
+        <tr style="font-weight: bold;">
+            <td style="width: 39%;">FULL NAME OF ELIGIBLE DEPENDENTS FOR COVERAGE</td>
+            <td style="width: 1%;"></td>
+            <td style="width: 19%">DATE OF BIRTH</td>
+            <td style="width: 1%;"></td>
+            <td style="width: 9%">AGE</td>
+            <td style="width: 1%;"></td>
+            <td style="width: 30%">RELATIONSHIP TO PRINCIPAL MEMBER</td>
+        </tr>
+        
+    {% for i in doc.dependents %}
+    <tr>
+        <td style="border-bottom: 1pt solid black;"> {{ i.full_name }} </td>    
+        <td style="width: 1%;"></td>
+        <td style="border-bottom: 1pt solid black;"> {% if i.date_of_birth == None %}{% else %}{{ i.date_of_birth }}{% endif %} </td>    
+        <td style="width: 1%;"></td>
+        <td style="border-bottom: 1pt solid black;"> {{ i.age }} </td>    
+        <td style="width: 1%;"></td>
+        <td style="border-bottom: 1pt solid black;"> {{ i.relationship }}</td>    
+    </tr>
+    {% endfor %}
+    
+    {% if doc.dependents | length < 5 %}
+        {% set len = 5 - doc.dependents | length %}
+            
+        {% for i in range(len) %}
+            <tr>
+                <td style="border-bottom: 1pt solid black"> &nbsp;</td>   
+                <td style="width: 1%;"></td>
+                <td style="border-bottom: 1pt solid black"> &nbsp;</td>   
+                <td style="width: 1%;"></td>
+                <td style="border-bottom: 1pt solid black"> &nbsp;</td>  
+                <td style="width: 1%;"></td>
+                <td style="border-bottom: 1pt solid black"> &nbsp;</td>    
+            </tr>
+        {% endfor %}
+    {% endif %}
+    </table>
+    <br>
+    <table class="dmh" style="border-spacing: 50px 0px !important;line-height: 8pt; border: 1px solid black"> 
+        <tr style="text-align:center;">
+            <th style="width: 90%;"> DISCLOSURE OF MEDICAL HISTORY</th>
+            <th style="width: 5%;">YES</th>
+            <th style="width: 5%;">NO</th>
+        </tr>
+        {% for i in doc.dmh_1 %}
+            
+            <tr style="text-align: justified">
+                <td style="border:1px solid black;margin-left:20px">{{i.number}}. {{i.item}}</td>
+                <td style="border:1px solid black;">{% if i.yes == 1 %} ☑ {%else%} ☐ {% endif %} </td>
+                <td style="border:1px solid black;"> {% if i.no == 1 %} ☑ {%else%} ☐ {% endif %} </td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan='3' style="border:1px solid black;margin-left:20px"><i>Items <b>7</b> to <b>9</b> for female applicants only.</i></td>
+        </tr>
+        {% for j in doc.dmh_2 %}
+            
+            <tr style="text-align: justified">
+                <td style="border:1px solid black;margin-right:20px">{{j.number}}. {{j.item}}</td>
+                <td style="border:1px solid black;">{% if j.yes == 1 %} ☑ {%else%} ☐ {% endif %} </td>
+                <td style="border:1px solid black;"> {% if j.no == 1 %} ☑ {%else%} ☐ {% endif %} </td>
+            </tr>
+        {% endfor %}
+         <tr>
+            <td colspan='3' style="border:1px solid black;margin-left:20px">10. Give details for items 5 to 8. <br>{{doc.small_text_62}}</td>
+        </tr>
+    </table>
+    
+    <p style="text-align:center"><i><br>
+        I hereby certify to the truth and completeness of the foregoing answers to the best of my knowledge, belief and information, including
+        such information pertaining to my dependent parent/s, spouse, children, brother or sister, if applicable, and if found otherwise, I agree
+        that my Medical Benefit shall be automatically invalidated, and that before I sign this application, I have read it carefully and/or the
+        same was read and translated and understood by me and the person who filled up this application under my direction and authority.
+        <br><br>
+        1. Qualified Dependents
+        <br>For Married Member
+        <br>• The legal spouse, 18 up to 60 years of age of the principal member.
+        <br>• Legitimate and/or legally adopted children 20 years and below of age when one not gainfully employed and unmarried.
+        <br><br>
+        For Single Member
+        <br>• Parents up to 60 years old, unemployed and dependent on the principal member.
+        <br>• Brothers and sisters 20 years and below of age whom one not gain fully employed and unmarried.
+        For Single Parents
+        <br>• Child / children only
+        Signature over Printed Name of Principal Member Date Signed
+        <br>1. Qualified Dependents
+        For Married Member
+        <br>• The legal spouse, 18 up to 60 years of age of the principal member.
+        <br>• Legitimate and/or legally adopted children 20 years and below of age when one not gainfully employed and unmarried.
+        For Single Member
+        <br>• Parents up to 60 years old, unemployed and dependent on the principal member.
+        <br>• Brothers and sisters 20 years and below of age whom one not gain fully employed and unmarried.
+        For Single Parents
+        • Child / children only
+        <br><br>
+        2. EFFECTIVITY DATE OF COVERAGE
+        {% set year =frappe.utils.formatdate(doc.posting_date,'yyyy') %}
+        {% set next = year| int + 1 %}
+        
+        <br>New Members
+        <br>The effective date of coverage shall be after 90 days ( January 15, {{ next }}) for admission except Outpatient and Dental Care that
+        <br>will take effect immediately and this coverage shall be effective only for one (1) year .
+        <br>Old Members / Renewal
+        <br>Effective immediately upon renewal, October 16, {{ year }}, for all benefits and shall be effective for one (1) year.
+        <br><br>
+        3. Requirements
+        <br>a. For verification purposes,
+        <br>i. all dependents enrolled (parents, siblings and children) must be supported with birth certificate (photopcopy).
+        <br>ii. Spouse enrolled should provide a marriage contract (photocopy)
+        <br>b. Required documents will be attached to the application letter and submit to CMP incharge.
+                
+    </i><p>
+<br><br>
+    <table style="width: 100%; text-align:center">
+        <tr>
+            <td style="border-bottom: 1pt solid black; width: 60%">{{ doc.employee_name}}</td>
+            <td style="width: 10%"></td>
+            <td style="border-bottom: 1pt solid black; width: 30%"></td>
+        </tr>
+        <tr style="line-height:5pt">
+            <td><i><small><center>Signature over Printed Name of Principal Member</center></small></i></td>
+            <td></td>
+            <td><i><small><center>Date Signed</center></small></i></td>
+        </tr>
+    </table>
+</div>
+</body>

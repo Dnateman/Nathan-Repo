@@ -1,0 +1,77 @@
+frappe.ui.form.on('Certificate of Employment', {
+    refresh(frm) {
+
+    },
+    employee(frm){
+        getcompensation_benefits(frm)
+    },
+    onload(frm) {
+        frm.set_query('certified_by', function() {
+            return {
+                filters: {
+                    full_name: 'CARRIEDO, ALMA COSTILLAS'
+                }
+            };
+        });
+        getcompensation_benefits(frm)        
+    }
+});
+// Get the total amount of Other Compensation and Benefits Table for a specific employee
+async function getcompensation_benefits(frm) {
+    let computed_amount = 0;
+
+    // Fetch employee's salary data
+    const salary_data = await frappe.db.get_value('Employee', { 'name': frm.doc.employee_id }, ['rate_type', 'rate', 'total_yr_days']);
+    
+    // Fetch other compensation and benefits data
+    const data = await frappe.db.get_value('Other Compensation and Benefits Table', { 'name': frm.doc.employee_id }, ['transaction_type', 'amount', 'is_active']);
+
+    // Calculate the computed amount based on salary type
+    if (salary_data.message) {
+        const rateType = salary_data.message.rate_type;
+        const rate = salary_data.message.rate;
+        const totalYrDays = salary_data.message.total_yr_days;
+
+        console.log(salary_data.message.rate_type);
+        console.log(salary_data.message.rate);
+        console.log(salary_data.message.total_yr_days);
+        if (data.message) {
+            for (const record of data.message) {
+                if (record.parent === frm.doc.employee) {
+                    if (rateType === 'Daily Rate') {
+                        if (record.transaction_type === "SA" && record.is_active == 1) {
+                            computed_amount = (rate * totalYrDays) / 12 * 13 + (record.amount * 12);
+                        } else {
+                            computed_amount = (rate * totalYrDays) / 12 * 13;
+                        }
+                    } else if (rateType === 'Monthly Rate') {
+                        if (record.transaction_type === "SA" && record.is_active == 1) {
+                            computed_amount = (rate * 13) + (record.amount * 12);
+                        } else {
+                            computed_amount = (rate * 13);
+                        }
+                    }
+                }
+                console.log(record.transaction_type);
+                console.log(record.amount);
+            }
+        }
+
+    }
+    // Set the computed amount in the form field
+    frm.set_value('amount', computed_amount);
+    console.log(computed_amount);
+
+}
+
+//communication allowance
+async function getcompensation_benefits(frm) {
+
+    const data = await frappe.db.get_value('Other Compensation and Benefits Table', { 'name': frm.doc.employee_id }, 'transaction_type', 'amount'); 
+
+    for(i in data){
+        if(data[i].message.transaction_type == 'COM.ALLOW' && data[i].message.is_active == 1){
+            frm.set_value('comallow', data[i].message.amount)
+        }
+    }
+}

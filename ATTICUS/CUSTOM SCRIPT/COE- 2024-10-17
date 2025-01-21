@@ -1,0 +1,133 @@
+frappe.ui.form.on('Certificate of Employment', {
+	refresh(frm) {
+        $('.fa.fa-print').hide() 
+		// your code here
+        //$('.control-value.like-disabled-input').css('color', 'white');
+        if(frm.doc.workflow_state === 'Approved' ) {
+            automateSignature(frm)
+            customButton(frm)
+        }
+	},
+    onload(frm){
+
+    }
+})
+//Todo Create custom button
+function customButton(frm){
+    frm.add_custom_button(__(`<i class="fa fa-print" style="margin-right: 5px;"></i> ${frm.doc.select_type}`), function() {
+            processSelectedOption(frm.doc.select_type, frm);
+    }).css({
+        'background-color': '#2C9041',
+        'color': 'white',
+        'border': 'none',
+        'padding': '5px 20px',
+        'text-align': 'center',
+        'text-decoration': 'none',
+        'display': 'inline-block',
+        'font-size': '12px',
+        'margin-top': '0px',
+        'cursor': 'pointer',
+        'border-radius': '4px'
+    }).attr('title', `Print ${frm.doc.select_type}`);;
+}
+
+function processSelectedOption(selected, frm) {
+    //Get the protocol and the location of the url
+    const host = `${window.location.protocol}//${window.location.host}`;
+    //Option url object    
+    const optionUrls = {
+        'With Compensation': 'Generic%20COE%20with%20Compensation',// "key" ; "Value" name of the print format
+        'Without Compensation': 'Generic%20COE%20Without%20Compensation',
+        'Resigned Employee': 'COE%20for%20Ex-Employee'
+    };
+    //https://osi-test.in:31780/printview?doctype=My%20Payslip&name=10ec73072c&trigger_print=1&format=My%20Payslip&no_letterhead=0&_lang=en
+    
+    if (optionUrls.hasOwnProperty(selected)) {// If selected option has property in optionUrls then get the name of the payslip
+        const format = optionUrls[selected]; 
+        window.open(`${host}/printview?doctype=Certificate%20of%20Employment&name=${frm.doc.name}&trigger_print=1&format=${format}&no_letterhead=1&_lang=en`);
+    }
+}
+
+
+
+//TODO: Automate signature once clicked
+function automateSignature(frm) {
+    const printButton = frm.add_custom_button(__("Show Signature"), function () {
+        iFrame(frm);
+    });
+
+    // Add custom styles to the button
+    printButton.css({
+        'font-weight': 'bold',
+        'border': '1px solid #f0f4f7'
+    });
+
+    // Add tooltip to the button
+    printButton.attr('title', 'Click to show the Acknowledgement Signature');
+
+    // Optionally, you can add custom CSS for tooltips
+    const style = `
+        .custom-tooltip:hover::after {
+            content: attr(title);
+            position: absolute;
+            background: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+    `;
+
+    // Append the custom CSS to the document
+    const styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = style;
+    document.head.appendChild(styleSheet);
+
+    // Add custom tooltip class to the button
+    //printButton.addClass('custom-tooltip');
+}
+
+
+//TODO: Get signature of the employee selected
+const getSignatureAttachment = async(frm) => {
+    return await frappe.db.get_list('Signatories', {
+        filters: {
+            'employee': frm.doc.employee
+        },
+        fields: ['*'],
+        limit: 100000
+    })
+} 
+
+//TODO: Display the signature in a field using iFrame
+const iFrame = async (frm) => {
+    const attachmentData = await getSignatureAttachment(frm);
+    let attachment = attachmentData.map(data => data.attachment);
+
+    let iframeContent =
+        `<html>
+            <head>
+                <style>
+                    #iframeContainer {
+                        width: 50%; /* Set the desired width */
+                        border: 1px solid #ccc; /* Optional: Add a border for styling */
+                        position: relative; /* Needed for the overlay */
+                        left:0;
+                    }
+                </style>
+            </head>
+            <body>
+                <div id="iframeContainer">
+                <img src="${attachment.toString()}" />
+                </div>
+            </body>
+        </html>`;
+
+    if (frm.fields_dict && frm.fields_dict['signature'] && frm.fields_dict['signature'].wrapper) {
+        $(frm.fields_dict['signature'].wrapper).html(iframeContent);
+    } else {
+        console.error("Wrapper element not found or accessible.");
+    }
+}

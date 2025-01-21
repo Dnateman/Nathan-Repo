@@ -1,0 +1,214 @@
+frappe.ui.form.on("Employee", {
+    before_save: function(frm) {
+        checkAddress(frm);
+    },
+    after_save: function(frm) {
+    	autoEmpIDinUser(frm);
+    },
+    municipality_city: function(frm) {
+        getValue(frm,"Municipality","municipality_city","parent", "region");
+    },
+    region: function(frm) {
+        //let filter = [["Municipality","parent", "=", frm.doc.region]]
+        //filterValues(frm, "region", filter,"municipality_city");
+        frm.set_query("municipality_city", function() {
+            return {
+              filters: [
+                ["Municipality","parent", "=", frm.doc.region]
+              ]
+            }
+        });
+    },
+    async onload(frm){
+        filterRoleProfile(frm)
+    }
+});
+
+frappe.ui.form.on("Employee Trainings and Seminar", {
+    examination_title: function(frm) {
+        $.each(frm.doc.trainings_and_seminar, function(i,row) {
+            row.email = frm.doc.email;
+        });
+    }
+});
+
+async function getCurUserDet(frm){
+    let emp_user_id = frappe.session.user
+    let emp_det = await frappe.db.get_list("Employee", {
+        filters : {"user_id" : emp_user_id},
+        fields  : ['name', 'role_profile'],
+        limit :  1
+    })
+    let check =  typeof emp_det
+    if(check !== 'undefined'){
+        return emp_det[0].role_profile
+    }
+}
+
+async function filterRoleProfile(frm){
+    let role_profile = await  getCurUserDet(frm)
+    const name = frm.doc.name
+   
+
+if (name.match(/New.*/)) {
+console.log("yes")
+//frappe.ui.toolbar.clear_cache()
+}else{
+if(role_profile == "HR Officer"){
+    frm.set_query("role_profile", function() {
+        return {
+        filters: [
+            ["Role Profile","name", "=", "Rank and File"]
+        ]
+        }
+    });
+}
+}
+}
+
+async function checkAddress(frm) {
+    //house no lot no
+    let house_no = ""
+    if(frm.doc.house_no_lot_no){ house_no = frm.doc.house_no_lot_no; }
+
+    //street name
+    let street_name = ""
+    if(frm.doc.street_name){ street_name = frm.doc.street_name; }
+
+    //village subdivision
+    let village_subdivision = ""
+    if(frm.doc.village_subdivision){ village_subdivision = frm.doc.village_subdivision; }
+
+    //barangay
+    let barangay = ""
+    if(frm.doc.barangay){ barangay = frm.doc.barangay; }
+       
+    //municipality city
+    let municipality_city = ""
+    if(frm.doc.municipality_city){ municipality_city = frm.doc.municipality_city; }
+
+    //region
+    let region = ""
+    if(frm.doc.region) {
+        region = frm.doc.region;
+    }
+
+    //zip code
+    let zip_code = ""
+    if (frm.doc.zip_code){
+        zip_code = frm.doc.zip_code;
+    }
+    
+    let complete_address = house_no + " " + street_name + " " + village_subdivision + " " + barangay + " " + municipality_city + " " + zip_code + " " + region;
+    let cur_complete_address = frm.doc.complete_address;
+    let current_address = {
+        "doctype": "Address",
+        "docname": frm.doc.employee_id + "-Current",
+        "address_title": frm.doc.employee_id,
+        "address_type": "Current",
+        "address_line1": house_no + " " + street_name + " " + village_subdivision,
+        "address_line2": barangay,
+        "city": municipality_city,
+        "pincode": zip_code,
+        "state": region,
+        "country": "Philippines",
+        "links": [{
+            "link_doctype": 'Employee',
+            "link_name": frm.doc.employee_id
+        }]
+    };
+
+    let filters = {"name": frm.doc.employee_id + "-Current"};
+    let data = await frappe.db.get_list("Address",{filters: filters,fields:["name"], limit:1});
+    let type = typeof data;
+    let h_type = typeof frm.doc.house_no_lot_no;
+    console.log(complete_address);
+    if((cur_complete_address != complete_address || cur_complete_address == null) && type != 'undefined') {
+        await frm.set_value('complete_address',complete_address);
+        console.log('update address');
+        updateAddress(frm, current_address);
+    } else if (type == 'undefined' && frm.doc.house_no_lot_no != '') {
+        await frm.set_value('complete_address',complete_address);
+        console.log('add address');
+        addAddress(frm,current_address);
+    } else {
+        await frm.set_value('complete_address','');
+    }
+    frm.refresh_fields("complete_address");
+}
+
+function addAddress(frm, current_address) {
+    frappe.call({
+    method: "frappe.client.insert",
+    args: {"doc": current_address}, // use JSON.parse(JSON.stringify(doc)) for parsing to json object
+    async: false,
+    callback: async function(r) {
+        //console.log(r)
+        if(r.exc) {
+            frappe.msgprint({
+                title: __('Error'),
+                indicator: 'red',
+                message: __('There were errors.')
+            });
+        }
+        }
+    })
+}
+
+function updateAddress(frm, current_address) {
+    let address = [current_address];
+    frappe.call({
+    method: "frappe.client.bulk_update",
+    args: {"docs": address}, // use JSON.parse(JSON.stringify(doc)) for parsing to json object
+    async: false,
+    callback: async function(r) {
+        //console.log(r)
+        if(r.exc) {
+            frappe.msgprint({
+                title: __('Error'),
+                indicator: 'red',
+                message: __('There were errors.')
+            });
+        }
+        }
+    })
+}
+
+async function getValue(frm, doctype, source_field, field, des_field) {
+    let field_type = typeof frm.doc[source_field];
+    if (field_type != "undefined") {
+        let filters = {"name": frm.doc[source_field]};
+        let data = await frappe.db.get_list(doctype,{filters: filters,fields:["name",field], limit:1});
+        let type = typeof data;
+        if (type != 'undefined') {
+        //console.log(data);
+        frm.set_value(des_field,data[0][field]);
+        }
+    }
+}
+
+//Automate Employee ID in Username if employees User account
+function autoEmpIDinUser(frm) {
+    var user_id = typeof frm.doc.user_id;
+    console.log(user_id, " user id");
+    console.log(frm.doc.user_id)
+    if (frm.doc.user_id != null) { //user_id != 'undefined' && (frm.doc.user_id != '' || 
+        //Update Single Field
+        frappe.call({
+            method: "frappe.client.set_value",
+            args: {
+                "doctype": "User",
+                "name": frm.doc.user_id,
+                "fieldname": "username",
+                "value": frm.doc.name
+            } 
+        });
+    }
+}
+
+async function onloadAddress(frm){
+    let filters = {"complete_address": ["LIKE", "undefined"]};
+    let data = await frappe.db.get_list("Address",{filters: filters, fields:["name"], limit:5});
+
+    console.log(data)
+}

@@ -1,0 +1,28 @@
+frappe.ui.form.on('Incident Report', {
+    before_save(frm){
+        getEmployeeEmail(frm)
+        
+       console.log(frm.selected_workflow_action, 'asdfasdfasdfasdf')
+       if(frm.selected_workflow_action == 'Update'){
+               console.log('Na update')
+       }
+   }
+})
+
+
+async function getEmployeeEmail(frm){
+   console.log('This is a message')
+ 
+   $.each(frm.doc.involved_employees, async function(i, row){
+       if(row.involvement == "Offender"){
+            frm.set_value('offender_email', row.employee_email.toString())
+       }
+       else if(row.involvement == "Complainant"){
+           frm.set_value('employee_email', row.employee_email.toString())
+       }
+       else if(row.involvement == "Witness"){
+            frm.set_value('witness_email', row.employee_email.toString())
+       }
+   })
+
+}

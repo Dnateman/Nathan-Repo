@@ -1,0 +1,57 @@
+<head>
+    <style>
+        p, a {
+            font-size: 16px;
+        }
+    </style>
+  </head>
+  <body>
+    <main>
+        <div class="letter-a" style="padding:60px;">
+            <br><br><br><br><br>
+            <h1 style="text-align: center; font-size: 24px; text-transform: uppercase;">
+                <b>CERTIFICATE OF LEAVE</b>
+            </h1>   
+            <br><br><br><br><br>
+            <p>
+                
+                This is to inform that <b>
+                {% if frappe.db.get_value("Employee", doc.employee, "gender") == 'Female' %}
+                    Ms. {{ frappe.db.get_value("Employee", doc.employee, "first_name").title() }} {{ frappe.db.get_value("Employee", doc.employee, "last_name").title() }}
+                {% elif frappe.db.get_value("Employee", doc.employee, "gender") == 'Male' %}
+                    Mr. {{ frappe.db.get_value("Employee", doc.employee, "first_name").title() }} {{ frappe.db.get_value("Employee", doc.employee, "last_name").title() }}
+                {% endif %}
+                </b> the {{doc.position_title}} of <b>{{ frappe.db.get_value("Employee", doc.employee, "company") }}</b>{% if frappe.db.get_value("Employee", doc.employee, "company") == 'CHG GLOBAL INC.'%} (formerly WORLD BALANCE INTERNATIONAL INC.){% endif %}.
+                Will be on the leave to {{ doc.reason_of_leave }} effective from {{frappe.utils.formatdate(doc.from_date, 'MMMM dd, yyyy')}} to {{frappe.utils.formatdate(doc.to_date, 'MMMM dd, yyyy')}}.
+
+                <br><br><br>
+                All transaction related to 
+                {% if frappe.db.get_value("Employee", doc.employee, "gender") == 'Female' %}
+                    her
+                {% elif frappe.db.get_value("Employee", doc.employee, "gender") == 'Male' %}
+                    his
+                {% endif %}
+                responsibilities will be handled by the appropriate personel during her absence.
+                <br><br>
+                {% set day = frappe.utils.formatdate(doc.posting_date, 'dd')|int %}
+                {% set suffix = 'th' %}
+                {% if day % 10 == 1 and day % 100 != 11 %}
+                    {% set suffix = 'st' %}
+                {% elif day % 10 == 2 and day % 100 != 12 %}
+                    {% set suffix = 'nd' %}
+                {% elif day % 10 == 3 and day % 100 != 13 %}
+                    {% set suffix = 'rd' %}
+                {% endif %}
+                Issued this {{ day }}<sup>{{ suffix }}</sup> day of {{ frappe.utils.formatdate(doc.posting_date, 'MMMM yyyy') }} in 19 V. Mapa St. Caloocan City, Philippines. 
+            </p>
+            <br><br>
+            <p>For your information and guidance</p>
+            <br><br><br><br><br><br><br>
+            <a style="text-align: left;"><b>ALMA C. CARRIEDO </b><br>
+                HR Deputy Head <br>
+                Email add: alma.carriedo@chgglobal.com.ph
+            </a>
+        </div>
+    </main>
+  </body>
+  

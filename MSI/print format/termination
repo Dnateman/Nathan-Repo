@@ -1,0 +1,97 @@
+<head>
+    <style>
+        p{
+            font-size: 16px;
+        }
+    </style>
+  </head>
+  <body>
+      <main>
+          <div class="letter-a" style="padding:60px;">
+              
+              <hr style="height:1px; background-color: black; font-size: 21px;">
+              <h3 style="margin-left: 0px; font-size: 19px; text-transform: uppercase;">
+                Termination (Effective date of termination)
+                  </h3>   
+              <hr style="height:1px; background-color: black; font-size: 21px;">
+              
+              <p>Hi, Team: <br>
+                Below are employee separation details. Please take note of effective date of separation and implement exit process::
+                </p>
+                <table>
+                    <tr>
+                        <td>Name: </td>
+                        <td>{{doc.employee_name}} ({{doc.employee}})</td>
+                    </tr>
+                    <tr>
+                        <td>Position:</td>
+                        <td>{{frappe.db.get_value("Employee", doc.employee, "position_title")}}</td>
+                    </tr>
+                    <tr>
+                        <td>LOB: </td>
+                        <td>{{doc.line_of_business}}</td>
+                    </tr>
+                    <tr>
+                        <td>Team: </td>
+                        <td>{{frappe.db.get_value("Employee", doc.employee, "division")}}</td>
+                    </tr>
+                    <tr>
+                        <td>Employee Work Email: </td>
+                        <td>{{frappe.db.get_value('Employee', doc.employee, 'email')}}</td>
+                    </tr>
+                    <tr>
+                        <td>Effective Date of Separation: </td>
+                        <td>{{doc.effective_on}}</td>
+                    </tr>
+                     <tr>
+                        <td>Reason: </td>
+                        <td>{{doc.remarks}}</td>
+                    </tr>
+                     
+                </table>
+                <p>TL:</p>
+                <table>
+                    <tr>
+                        <td>Please advise which of the following actions shall be taken by the IT team for the employee's email account: </td>
+                    </tr>
+                    <ol>
+                        <li>Keep email active until (indicate deletion date) and forward access to (indicate to whom should access be forwarded)</li>
+                        <li>Forward access of some files (please indicate which files) then delete on (indicate deletion date)</li>
+                        <li>Delete right away</li>
+                    </ol>
+                    <tr>
+                        <td>Please note, if we do not receive any response within the next 2 working days, IT will be deleting the account without backup. </td>
+                    </tr>
+                </table>
+                <p>OM: </p>
+                <table>
+                    <tr>
+                        <td>For restriction from company property. HR will reach out to you if we need assistance with guiding the employee in exiting the building very discreetly. </td>
+                    </tr>
+                </table>
+                <p>Payroll: </p>
+                <table>
+                    <tr>
+                        <td>For processing of last pay. </td>
+                    </tr>
+                </table>
+                <p>HR: </p>
+                <table>
+                    <tr>
+                        <td>For disabling of MEM/MOS access and for removal from government benefits list. </td>
+                        <td>For removal from company benefits list.</td>
+                    </tr>
+                </table>
+                <p>IT: </p>
+                <table>
+                    <tr>
+                        <td>For restriction of access to work tools. </td>
+                        <td>Kindly update all e-mails sheet and take note of equipment for return.</td>
+                    </tr>
+                </table>
+                <p>All: </p>
+                <p>Please make sure to reflect changes accordingly from your end. </p>
+                   
+          </div>
+      </main>
+  </body>

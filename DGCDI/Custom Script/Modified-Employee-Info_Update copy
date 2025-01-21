@@ -1,0 +1,240 @@
+frappe.ui.form.on('Employee Info Update', {
+    async employee(frm) { 
+        await  dependents(frm); 
+    },
+    async item_type(frm) { 
+        await  dependents(frm); 
+    },  
+    async before_workflow_action(frm) {
+        if (frm.selected_workflow_action === 'Approve') {
+            await update_employee_main(frm);
+            await  update_dependents(frm, frm.doc.new_family_table);
+        } else if (frm.selected_workflow_action === 'Cancel') {
+            await revertDependents(frm);
+            await  update_dependents(frm, frm.doc.current_family_table);
+        }   
+    }
+});
+
+/* GENERATE EMPLOYEE INFORMATION FUNCTIONS */
+//get_employee_information func: gets the document of the employee in the form
+async function get_employee_information(frm) {
+    if(frm.doc.employee) {
+        var data = await frappe.db.get_doc("Employee", frm.doc.employee)
+        /* Console Viewing: */
+            console.log("Employee Document: ", data)
+        /* End Console View */
+    }
+    return data
+}
+
+// dependents func: main function for setting up employee current family members
+async function  dependents(frm) {
+    if(frm.doc.item_type == "Dependents") {
+        let data = await get_current_family_setup(frm)
+            if(frm.doc.__islocal) {
+                await add_family_members(frm, data, "dependents_table")
+                await add_family_members(frm, data, "dependents_save_table")
+            }
+        /* Console Viewing: */
+            console.log("Family Members: ", data)
+        /* End Console View */
+    }
+}
+
+//get_current_family_setup func: gets current family members
+async function get_current_family_setup(frm) {
+    let list = []
+    let data = await get_employee_information(frm)
+        if(data.family_members) {
+            for(let x = 0; x < data.family_members.length; x++) {
+                list.push(data.family_members[x])
+            }
+        }
+    return list
+}
+
+//add_family_members func: plots current family members to family members table for current
+async function add_family_members(frm, family, table) {
+    frm.clear_table(table)
+        $.each(family, function(i,row) {
+            frm.add_child(table, {
+                full_name: row.full_name,
+                birthday: row.birthday,
+                relationship: row.relationship,
+                fm_contact: row.fm_contact,
+                is_dependent: row.is_dependent,
+                is_pwd: row.is_pwd,
+                adult: row.adult,
+                is_qualified_dependent: row.is_qualified_dependent,
+            })
+            frm.refresh_fields(table)
+        })
+}
+
+
+
+/* END OF GENERATE EMPLOYEE INFORMATION FUNCTIONS */
+
+/* UPDATE EMPLOYEE FAMILY MEMBERs FUNCTIONS */
+// Update family members function
+async function  update_dependents(frm, decision) {
+    if(frm.doc.item_type == "General and Personal Info") {
+        let data = await scan_family_docs(frm, await get_employee_information(frm), decision)
+            if(data) {
+                await update_employee(frm, data, "frappe.client.insert_many")
+            }
+    }
+}
+
+
+//scan_family_docs func: gets family docs to be deleted
+async function scan_family_docs(frm, data, family_table) {
+    let list = []
+        if(data) {
+            for(let x = 0; x < data.family_members.length; x++) {
+                await delete_docs(frm, data.family_members[x].doctype, data.family_members[x].name)
+            }
+        }
+        if(family_table) {
+            for(let i = 0; i < family_table.length; i++) {
+                let doc = {
+                    "doctype": "Family Members",
+                    "full_name": family_table[i].full_name,
+                    "birthday": family_table[i].birthday,
+                    "relationship": family_table[i].relationship,
+                    "fm_contact": family_table[i].fm_contact,
+                    "is_dependent": family_table[i].is_dependent,
+                    "is_pwd": family_table[i].is_pwd,
+                    "adult": family_table[i].adult,
+                    "is_qualified_dependent": family_table[i].is_qualified_dependent,
+                    parent: frm.doc.employee,
+                    parenttype: "Employee",
+                    parentfield: "family_members"
+                }
+                list.push(doc)
+            }
+
+        }
+        else {console.log("No Family Members Found")}
+    return list    
+}
+
+//delete_family_docs func: deletes family docs 
+async function delete_docs(frm, doctype, name) {
+    frappe.call({
+        method: 'frappe.client.delete',
+        args: {'doctype' : doctype,
+                'name': name
+        },
+        async : false,
+        callback: async function(r) {
+            console.log('Succesfully Deleted')
+        }
+    })    
+}
+
+
+/* END OF UPDATE EMPLOYEE FAMILY MEMBERS FUNCTIONS*/
+
+/* GET FORM FIELDS FUNCTIONS */
+//get_form_fields func: gets the fields of the form with existing values to update the employee document
+async function get_form_fields(frm, startsWith) {
+    let section = frm.fields_dict
+    let data = []
+        $.each(frm.fields_dict, function(i,row) {
+            if(row.df.depends_on == `eval:doc.item_type=='${frm.doc.item_type}'`) {
+                for(let x = 0; x < section[row.df.fieldname].fields_list.length; x++) {
+                    let fieldname = section[row.df.fieldname].fields_list[x].df.fieldname
+                    if(fieldname.startsWith(startsWith) && (fieldname != "amended_from" && fieldname != "dependents_table" && "dependents_save_table")) {
+                        data.push(fieldname)
+                    }
+                }
+            }
+        })
+
+    return data
+}
+/* END OF FORM FIELDS FUNCTIONS */
+
+/* UPDATE EMPLOYEE 201 FUNCTIONS */
+//update_employee_main func: updates the employee 201 based on the item_type on the form and fields with values
+async function update_employee_main(frm) {
+    let data = await get_fields_to_update(frm)
+        await update_employee(frm, data, "frappe.client.bulk_update")
+    /* Console Viewing: */
+        console.log("Fields: ", data)
+    /* End Console View */
+}
+
+//get_fields_to_update func: get fields with values
+async function get_fields_to_update(frm) {
+    let list = []
+    let address = ['new_address','new_address_postal_code']
+    let fields_list = {"doctype": "Employee", "docname": frm.doc.employee}
+    console.log(fields_list);
+    let data = await get_form_fields(frm, 'new_')
+        for(let x = 0; x < data.length; x++) {
+            if((typeof frm.doc[data[x]] != 'undefined' && frm.doc[data[x]] != "") && !address.includes(data[x])) {
+                var fieldname = data[x].replace("new_","")
+                fields_list[fieldname] = frm.doc[data[x]]
+            }
+            if((typeof frm.doc[data[x]] != 'undefined' && frm.doc[data[x]] != "") && address.includes(data[x])) {
+                var fieldname = data[x].replace("new_","current_")
+                fields_list[fieldname] = frm.doc[data[x]]
+            }          
+        }
+        list.push(fields_list)
+    return list
+}
+
+//revertDependents func: reverts the changes made to the employee records based on the forms current values
+async function revertDependents(frm) {
+    let data = await get_fields_to_revert(frm)
+        await update_employee(frm, data, "frappe.client.bulk_update")
+    /* Console Viewing: */
+        console.log("Fields: ", data)
+    /* End Console View */
+}
+
+//get_fields_to_revert func: reverts changes made using the fields in the form
+async function get_fields_to_revert(frm) {
+    let list = []
+    let address = ['current_address','current_address_postal_code']
+    let fields_list = {"doctype": "Employee", "docname": frm.doc.employee}
+    let _data = await get_form_fields(frm, 'current_')
+    let data = await get_form_fields(frm, 'current_')
+        for(let x = 0; x < data.length; x++) {
+            if(!address.includes(data[x])) {
+                var fieldname = data[x].replace("current_","")
+                if(typeof frm.doc[_data[x]] == 'undefined') {fields_list[fieldname] = ""}
+                else {fields_list[fieldname] = frm.doc[data[x]]}
+            }
+            if(address.includes(data[x])) {
+                if(typeof frm.doc[_data[x]] == 'undefined') {fields_list[fieldname] = ""}
+                else {fields_list[fieldname] = frm.doc[data[x]]}
+            }          
+        }
+        list.push(fields_list)
+    return list
+}
+
+//update_employee func: updates the employee records based on the new fields
+async function update_employee(frm, data, call_method) {
+    await frappe.call({
+        method: call_method,
+        args: {
+            docs: data
+        },
+        callback: function(response) { 
+            console.log("Document Updated: ", response.message)
+            frappe.msgprint(__("Updated Records"))
+        },
+        error: function(response) { 
+            console.log("Error Occured: ", response.error) 
+            frappe.validated = false
+        } 
+    })
+}
+/* END OF UPDATE EMPLOYEE 201 FUNCTIONS */
+

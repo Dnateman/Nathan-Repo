@@ -1,0 +1,31 @@
+<h3>Certificate of Employment Details</h3>
+
+<table border="1">
+
+<tr>
+<td>Employee Name</td>
+<td>{{doc.employee_name}}</td>
+</tr>
+
+<tr>
+<td>Date From</td>
+<td>{{doc.from_date}}</td>
+</tr>
+
+<tr>
+<td>Date To</td>
+<td>{{doc.to_date}}</td>
+</tr>
+
+<tr>
+<td>Company Name</td>
+<td>{{doc.company}}</td>
+</tr>
+
+<tr>
+<td>Remarks/Activities</td>
+<td>{{doc.purpose}}</td>
+</tr>
+
+
+</table>

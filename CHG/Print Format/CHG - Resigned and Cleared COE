@@ -1,0 +1,61 @@
+<head>
+    <style>
+        p, a {
+            font-size: 16px;
+        }
+    </style>
+  </head>
+  <body>
+    <main>
+        <div class="letter-a" style="padding:60px;">
+            <br><br><br><br><br>
+            <h1 style="text-align: center; font-size: 24px; text-transform: uppercase;">
+                CERTIFICATE OF EMPLOYMENT
+            </h1>   
+            <br><br><br><br><br>
+            <p>
+                This is to certify that <b>
+                {% if frappe.db.get_value("Employee", doc.employee, "gender") == 'Female' %}
+                    Ms. {{ frappe.db.get_value("Employee", doc.employee, "full_name") }}
+                {% elif frappe.db.get_value("Employee", doc.employee, "gender") == 'Male' %}
+                    Mr. {{ frappe.db.get_value("Employee", doc.employee, "full_name") }}
+                {% endif %}
+                </b> is a bonafide employee of {{ frappe.db.get_value("Employee", doc.employee, "company") }}{% if frappe.db.get_value("Employee", doc.employee, "company") == 'CHG GLOBAL INC.'%} (formerly WORLD BALANCE INTERNATIONAL INC.){% endif %},
+                as {{ frappe.db.get_value("Employee", doc.employee, "position_title") }} from <b>{{ frappe.utils.formatdate(frappe.db.get_value("Employee", doc.employee, "date_hired"), 'MMMM dd, yyyy') }}</b> until 
+                
+                {% if frappe.db.get_value("Employee", doc.employee, "gender") == 'Female' %}
+                    her.
+                {% elif frappe.db.get_value("Employee", doc.employee, "gender") == 'Male' %}
+                    his.
+                {% endif %}
+                
+                resignation serve effective at the close of business hours on  
+                <b>{{ frappe.utils.formatdate(frappe.db.get_value("Employee", doc.employee, "end_of_contract"), 'MMMM dd, yyyy') }}</b>
+
+                <br><br><br>
+                This certification is being issued in favor of {% if frappe.db.get_value("Employee", doc.employee, "gender") == 'Female' %}
+                Ms. {{ frappe.db.get_value("Employee", doc.employee, "last_name") }}
+                    {% elif frappe.db.get_value("Employee", doc.employee, "gender") == 'Male' %}
+                Mr. {{ frappe.db.get_value("Employee", doc.employee, "last_name") }}
+                    {% endif %} for any legal purposes it may serve.
+                <br><br>
+                {% set day = frappe.utils.formatdate(doc.from_date, 'dd')|int %}
+                {% set suffix = 'th' %}
+                {% if day % 10 == 1 and day % 100 != 11 %}
+                    {% set suffix = 'st' %}
+                {% elif day % 10 == 2 and day % 100 != 12 %}
+                    {% set suffix = 'nd' %}
+                {% elif day % 10 == 3 and day % 100 != 13 %}
+                    {% set suffix = 'rd' %}
+                {% endif %}
+                Issued this {{ day }}<sup>{{ suffix }}</sup> day of {{ frappe.utils.formatdate(doc.from_date, 'MMMM yyyy') }} in 19 V. Mapa St. Caloocan City, Philippines. 
+            </p>
+            <br><br><br><br>
+            <a style="text-align: left;"><b>ALMA C. CARRIEDO </b><br>
+                HR Deputy Head <br>
+                Email add: alma.carriedo@chgglobal.com.ph
+            </a>
+        </div>
+    </main>
+  </body>
+  

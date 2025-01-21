@@ -1,0 +1,178 @@
+
+<head>
+    <style>
+        .head {
+            margin: auto;
+            text-align: center;
+        }
+        .head img {
+            width: 130%;
+            height: auto;
+        }
+        .header-content, .body-content {
+            margin: 40px;
+        }
+        .header-content h1, h3 {
+            font-weight: bold;
+        }
+        .header-content {
+            padding-top: 40px;
+        }
+        .header-content h1 {
+            text-align: center;
+            font-size: 40px;
+        }
+        .header-content h3 {
+            font-size: 24px;
+        }
+        .body-content p {
+            font-size: 20px;
+            text-align: justify;
+        }
+        .signatories {
+            margin-left: 600px;
+            text-align: center;
+            margin-top: 30px;
+            position: relative;
+        }
+        .signature-image {
+            position: absolute;
+            top: 0;
+            left: 55%;
+            transform: translateX(-50%);
+            z-index: 1;
+            height: auto;
+            width: 200px;
+        }
+        .sign {
+            font-style: italic;
+            font-size: 18px;
+        }
+        .signee {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+        .form-footer {
+            margin: 10px;
+            text-align: center;
+            padding-bottom: 20px;
+            bottom: 0;
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <main>
+    <header class="head">
+  
+    {% set logo = frappe.db.get_value('Company', doc.company, 'company_logo') %}
+            {% if logo != None %}
+            <img src="{{logo}}" alt="">
+            {% endif %}
+    </header>
+    <div class="header-content">
+        <h1>CERTIFICATE OF EMPLOYMENT</h1> <br><br>
+        <h3>TO WHOM IT MAY CONCERN:</h3>
+    </div>
+    {% if doc.request_type_ == 'Without Compensation' %}
+  
+    <div class="body-content">
+        <p>
+            
+            This is to certify that 
+            <b>
+                {% if frappe.db.get_value("Employee", doc.employee, 'gender') == 'Male' %} Mr. {% else %} Ms. {% endif %}
+                {% if frappe.db.get_value("Employee", doc.employee, 'first_name') != None %} {{ frappe.db.get_value("Employee", doc.employee, 'first_name') }} {% else %} {% endif %}
+                {% if frappe.db.get_value("Employee", doc.employee, 'middle_name') != None %} {{ frappe.db.get_value("Employee", doc.employee, 'middle_name') }} {% else %} {% endif %}
+                {% if frappe.db.get_value("Employee", doc.employee, 'last_name') != None %} {{ frappe.db.get_value("Employee", doc.employee, 'last_name') }} {% else %} {% endif %}
+                {% if frappe.db.get_value("Employee", doc.employee, 'suffix') != None %} {{ frappe.db.get_value("Employee", doc.employee, 'suffix') }} {% else %} {% endif %}
+            </b> 
+            is an employee of <b>{{ doc.company }}</b> assigned at {{ doc.department }}
+            from {{ frappe.utils.format_datetime(frappe.db.get_value("Employee", doc.employee, "date_hired"), "MMMM d, YYYY") }} up to 
+            {% if frappe.db.get_value("Employee", doc.employee, 'is_active') != 1 %} {{ frappe.utils.format_datetime(doc.to_date, "MMMM d, YYYY") }} {% else %} present {% endif %}
+            holding the position 
+                {% if frappe.db.get_value("Employee", doc.employee, 'position_title') != None %} as {{ frappe.db.get_value("Employee", doc.employee, 'position_title') }} {% else %} {% endif %}
+        </p> <br>
+        <p>
+            This certification is issued upon the request of the above-named employee for {% if doc.purpose != None %} {{doc.purpose}}
+            {% else %} whatever legal purpose it may serve his best. {% endif %}
+        </p> <br>
+        <p> Given this <span id="day">{{ doc.posting_date }}</span><span id="ord"></span> day of {{ frappe.utils.format_datetime(doc.posting_date, "MMMM YYYY") }}, 
+            in the City of {{ doc.issued_in }}</p>
+    </div>
+    {% elif doc.request_type_ == 'With Compensation' %}
+    
+    <div class="body-content">
+        <p>
+    
+            This is to certify that 
+            <b>
+                {% if frappe.db.get_value("Employee", doc.employee, 'gender') == 'Male' %} Mr. {% else %} Ms. {% endif %}
+                {% if frappe.db.get_value("Employee", doc.employee, 'first_name') != None %} {{ frappe.db.get_value("Employee", doc.employee, 'first_name') }} {% else %} {% endif %}
+                {% if frappe.db.get_value("Employee", doc.employee, 'middle_name') != None %} {{ frappe.db.get_value("Employee", doc.employee, 'middle_name') }} {% else %} {% endif %}
+                {% if frappe.db.get_value("Employee", doc.employee, 'last_name') != None %} {{ frappe.db.get_value("Employee", doc.employee, 'last_name') }} {% else %} {% endif %}
+                {% if frappe.db.get_value("Employee", doc.employee, 'suffix') != None %} {{ frappe.db.get_value("Employee", doc.employee, 'suffix') }} {% else %} {% endif %}
+            </b> 
+            is an employee of <b>{{ doc.company }}</b> assigned at {{ doc.department }}
+            from {{ frappe.utils.format_datetime(frappe.db.get_value("Employee", doc.employee, "date_hired"), "MMMM d, YYYY") }} up to 
+            {% if frappe.db.get_value("Employee", doc.employee, 'is_active') != 1 %} {{ frappe.utils.format_datetime(doc.to_date, "MMMM d, YYYY") }} {% else %} present {% endif %}
+            holding the position 
+                {% if frappe.db.get_value("Employee", doc.employee, 'position_title') != None %} as {{ frappe.db.get_value("Employee", doc.employee, 'position_title') }} {% else %} {% endif %}
+            with a {{ frappe.db.get_value("Employee", doc.employee, 'rate_type') }} of {{frappe.utils.money_in_words(frappe.db.get_value("Employee", doc.employee, 'rate'), 'Php')}} 
+            ({{ "%.2f"|format(frappe.db.get_value("Employee", doc.employee, 'rate')) }})
+        </p> <br>
+        <p>
+            This certification is issued upon the request of the above-named employee for {% if doc.purpose != None %} {{doc.purpose}}
+            {% else %} whatever legal purpose it may serve his best. {% endif %}
+        </p> <br>
+        <p> Given this <span id="day">{{ doc.posting_date }}</span><span id="ord"></span> day of {{ frappe.utils.format_datetime(doc.posting_date, "MMMM YYYY") }}, 
+            in the City of {{ doc.issued_in }}</p>
+    </div>
+    {% else %}
+    <p>No cap</p>
+    {% endif %}
+    <div class="signatories">
+        <p class="sign">Signed By:</p> <br>
+        {% if doc.enable_signature == 1 %}
+        {% set signature = doc.signature %}
+        {% if signature != "" %}
+            <img class="signature-image" src="/files/ " alt="">
+        {% endif %}
+        {% else %}{% endif %}
+        <p class="signee">{{doc.signed_by}}</p>
+        <p class="position-title">
+            {% if frappe.db.get_value("Employee", frappe.db.get_value("Electronic Signature", doc.signed_by, 'employee'), 'position_title') != None %}
+                {{ frappe.db.get_value("Employee", frappe.db.get_value("Electronic Signature", doc.signed_by, 'employee'), 'position_title') }}
+            {% else %} 
+            {% endif %}
+        </p>
+    </div>
+    <footer class="form-footer">
+        <p>________________________________________________________________________________________________________________________________</p>
+        <p> I Santiago Blvd., General Santos City, and Gmail Address: jdato-on@dgcd.com.ph Contact Number: (083) 826-9051</p>
+    </footer>
+    </main>
+    <script type="text/javascript">
+        var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+        var x = document.getElementById('day').innerHTML;
+        if (parseInt(x.substring(8, 10)) == 1 || parseInt(x.substring(8, 10)) == 21 || parseInt(x.substring(8, 10)) == 31) {
+            document.getElementById('ord').innerHTML = "st"
+        } else if (parseInt(x.substring(8, 10)) == 2 || parseInt(x.substring(8, 10)) == 22) {
+            document.getElementById('ord').innerHTML = "nd"
+        } else if (parseInt(x.substring(8, 10)) == 3 || parseInt(x.substring(8, 10)) == 23) {
+            document.getElementById('ord').innerHTML = "rd"
+        } else {
+            document.getElementById('ord').innerHTML = "th"
+        }
+        var day = parseInt(x.substring(8, 10))
+        var month = parseInt(x.substring(5, 7))
+        var year = x.substring(0, 4)
+        document.getElementById('day').innerHTML = day
+        document.getElementById('mon').innerHTML = months[month-1] + " " + year
+        console.log(day);
+        console.log(month);
+        </script>
+</body>
+</html>
+

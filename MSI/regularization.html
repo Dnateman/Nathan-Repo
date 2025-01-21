@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        table, tr, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        table{
+            margin-left: auto;
+            margin-right: auto;
+            width: 80%;
+        }
+        .tabdate {
+            display: inline-block;
+            margin-left: 140px;
+        }
+        .tabsign {
+            display: inline-block;
+            margin-left: 90px;
+        }
+        .tabfromto{
+            display: inline-block;
+            margin-left: 80px;
+        }
+        header img {
+            width: 100%; /* Adjust width as needed */
+            max-width: 800px; /* Set a max width */
+            height: auto; /* Maintain aspect ratio */
+            display: block;
+            margin-top: 10px;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        footer img {
+            width: 100%; /* Adjust width as needed */
+            max-width: 800px; /* Set a max width */
+            height: auto; /* Maintain aspect ratio */
+            display: block;
+            margin-left: 0;
+            margin-right: 0;
+            margin-bottom: 0;
+        }
+        .signature-img {
+            width: 150px; /* Adjust width as needed */
+            height: auto; /* Maintain aspect ratio */
+        }
+    </style>
+
+
+</head>
+    <main>
+        <body>
+            <header>
+                <img src="/files/hearder.png" style="position: absolute; top: 0; z-index: -1; ">
+            </header>
+        <h1 style="text-align: center;">Notice of Personnel Action</h1><br>
+        <div style="display: flex; padding-left: 65px;"><p>Employee Name:<span class="tabdate"></span>Date:</p></div>
+        <p style="padding-left: 50px;">ID No:</p>
+        <table>
+            <tr>
+                <td style="color: white;">aa</td>
+                <td style="border-top-color: white;border-bottom-color: white;">New Hire</td>
+                <td style="color: white;">aa</td>
+                <td  style="border-top-color: white;border-bottom-color: white;">Transfer</td>
+                <td style="color: white;">aa</td>
+                <td style="border-top-color: white;border-bottom-color: white;border-right-color: white;">Change in Employee Information</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="border-top-color: white;border-bottom-color: white;">Rehire</td>
+                <td></td>
+                <td style="border-top-color: white;border-bottom-color: white;">Separation</td>
+                <td></td>
+                <td style="border-top-color: white;border-bottom-color: white;border-right-color: white;">Change in Salary Information</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="border-top-color: white;border-bottom-color: white;">Promotion</td>
+                <td></td>
+                <td style="border-top-color: white;border-bottom-color: white; border-right-color: white;">Secondment</td>
+                <td style="border-left-color: white; border-right-color: white; border-bottom-color: white;"></td>
+                <td style="border-bottom-color: white;border-right-color: white;"></td>
+            </tr>
+
+        </table>
+
+        <br>
+
+        <p style="display: flex; padding-left: 25%;">From:<span class="tabfromto"></span>Up to:</p>
+
+        <table>
+            <tr>
+                <td style="background-color: rgb(0, 0, 97); text-align: center; color: white;">Change</td>
+                <td style="background-color: rgb(0, 0, 97); text-align: center; color: white;">Current</td>
+                <td style="background-color: rgb(0, 0, 97); text-align: center; color: white;">NEW</td>
+            </tr>
+            <tr>
+                <td>Title:</td>
+                <td>{{doc.current_position_title}}</td>
+                <td>{{doc.new_position_title}}</td>
+            </tr>
+            <tr>
+                <td>Department/Team:</td>
+                <td>{{ frappe.db.get_value("Employee", doc.employee, "department") }}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Line of Business:</td>
+                <td>{{doc.line_of_business}}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Basic Salary/Allowances:</td>
+                <td>Basic:
+                    <br>Allowance: </td>
+                <td>Basic:
+                    <br>Allowance: </td>
+            </tr>
+            <tr>
+                <td>Reporting to:</td>
+                <td>{{ frappe.db.get_value("Employee", doc.employee, "reports_to") }}</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Type of Employment:</td>
+                <td>{{doc.current_employment_status}}</td>
+                <td>{{doc.new_employment_status}}</td>
+            </tr>
+            <tr>
+                <td>Shift Type:</td>
+                <td>Gliding</td>
+                <td></td>
+            </tr>
+
+        </table>
+        <br>
+        <div style="margin-left: 80px;margin-right: 80px;">
+        <p>This movement is  effective </p>
+        <p>All the other details of your employment contract remain the same.</p>
+        <p>For information and guidance.</p>
+        <img src="/files/sign.png" class="signature-img">
+        <p>KIRSTY MAE V. SUANA</p>
+        <p>Human Resources Manager</p>
+        <p style="color: red;">Movement Handler: </p>
+        <br>
+        <p>By affixing the signature below, the undersigned hereby acknowledges receipt of this notice and full understanding of its contents. </p>
+        <hr style="height:2px; color: black;">
+        <p style="display: flex; line-height: normal;">Employee Signature over Printed Name<span class="tabsign"></span>Date signed</p>
+        </div>
+
+        </body>
+
+    </main>
+
+<footer>
+    <img src="/files/footer.png" style="position: absolute; bottom: 0; z-index: -1; ">
+</footer>
+</html>
+
+

@@ -1,0 +1,97 @@
+frappe.ui.form.on('Incident Report', {
+    before_save(frm){
+        getEmployeeEmail(frm)
+        
+       console.log(frm.selected_workflow_action, 'asdfasdfasdfasdf')
+       if(frm.selected_workflow_action == 'Update'){
+               console.log('Na update')
+       }
+   },
+   setup: async function(frm) {  
+    console.log('Form setup');
+    if (frm.is_new()) { 
+        await fetchViolationDetailsAndPopulate(frm);
+    }
+    },
+
+   onload: async function(frm) {
+    console.log('Form loaded')
+    frm.set_df_property('specify_evaluation', 'hidden', true);
+    frm.set_df_property('about_the_violation', 'cannot_add_rows', true);
+   },
+
+
+})
+
+frappe.ui.form.on('What is the Violation About', {
+    yes_or_no(frm){
+    let table = frm.doc.about_the_violation || [];
+    const mappedTable = table.filter(filter => filter.yes_or_no === 1);
+
+    const hasOther = table.some(item => item.yes_or_no === 1 && item.details === 'Other');
+    console.log(mappedTable.length > 0 && hasOther)
+    if (mappedTable.length > 0 && hasOther) {
+        console.log('May laman to');
+        frm.set_df_property('specify_evaluation', 'hidden', false);
+    } else {
+        console.log('Wala laman to');
+        frm.set_df_property('specify_evaluation', 'hidden', true);
+    }
+    frm.refresh_field('specify_evaluation');
+    }
+
+});
+
+async function getEmployeeEmail(frm){
+   console.log('This is a message')
+ 
+   $.each(frm.doc.involved_employees, async function(i, row){
+       if(row.involvement == "Offender"){
+            frm.set_value('offender_email', row.employee_email.toString())
+       }
+       else if(row.involvement == "Complainant"){
+           frm.set_value('employee_email', row.employee_email.toString())
+       }
+       else if(row.involvement == "Witness"){
+            frm.set_value('witness_email', row.employee_email.toString())
+       }
+   })
+
+}
+// Function to fetch all violation details and populate them into the child table
+async function fetchViolationDetailsAndPopulate(frm) {
+    let violation_details = await frappe.db.get_list('Violation Details', {
+        fields: ['details_of_violation'],
+        limit: 500 
+    });
+    
+            let sortedDetails = violation_details.sort((a, b) => {
+            if (a.details_of_violation === 'Other') return 1; // 'Other' should come last
+            if (b.details_of_violation === 'Other') return -1; // Any other item should come before 'Other'
+            if (a.details_of_violation < b.details_of_violation) return -1;
+            if (a.details_of_violation > b.details_of_violation) return 1;
+            return 0;
+        });
+    
+    if (violation_details && violation_details.length > 0) {
+        frm.doc.about_the_violation = frm.doc.about_the_violation || []; // Ensure the table is initialized
+
+        violation_details.forEach(detail => {
+            // Check if the detail already exists in the table
+            let exists = frm.doc.about_the_violation.some(row => row.details === detail.details_of_violation);
+            if (!exists) {
+                let row = frm.add_child('about_the_violation');
+                row.details = detail.details_of_violation;
+            }
+        });
+        frm.refresh_field('about_the_violation');
+    }
+}
+
+//=================================================================================================================================//
+//             Date Modified                            By                                              Added                     =//
+//              2024-09-10                            Nathan                            Added Automation of child table           =//
+//                                                                                                                                =//
+//                                                                                                                                =//
+//                                                                                                                                =//
+//=================================================================================================================================//

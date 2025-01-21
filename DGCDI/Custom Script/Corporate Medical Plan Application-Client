@@ -1,0 +1,170 @@
+frappe.ui.form.on('Corporate Medical Plan Application', {
+	async onload(frm) {
+		await getDMH(frm)
+	},
+    refresh(frm){
+        if(frm.doc.workflow_state == "Approved" && !(frm.doc.loan_application)) {
+            loanAppButton(frm)
+        } else {
+            frm.remove_custom_button('Create Loan Application');
+        }
+    },
+    async employee(frm){
+        // getDependents(frm)
+    },
+    after_workflow_action(frm){
+        if(frm.doc.workflow_state == 'Approved') {
+            
+        }
+    },
+    async before_workflow_action(frm){
+        if(frm.doc.workflow_state == 'For Approval') {
+            frappe.db.set_value('Corporate Medical Plan Application', frm.doc.name, 'approved_application_on', getServerTime());
+
+        }
+    },
+    corporate_medical_plan_package(frm){
+        cur_frm.clear_table("dependents")
+    }
+})
+
+frappe.ui.form.on('Disclosure of Medical History Table', {
+	yes(frm, cdt, cdn) {
+		let row = locals[cdt][cdn]
+        row.no = 0
+        frm.refresh_field('dmh_1')
+        frm.refresh_field('dmh_2')
+	},
+	no(frm, cdt, cdn) {
+		let row = locals[cdt][cdn]
+        row.yes = 0
+        frm.refresh_field('dmh_1')
+        frm.refresh_field('dmh_2')
+	},
+})
+
+async function loanAppButton(frm){
+    frm.add_custom_button(__("Create Loan Application"), async function() {
+        insertLoanApp(frm)
+    });
+}
+
+async function getDMH(frm){
+    if(frm.doc.dmh_1 ==  undefined)  {
+        let fields  = ["*"];
+        let data = await frappe.db.get_list("Disclosure of Medical History Item", {filters: {}, fields: fields, limit: 10000, 'order_by':'name'});
+        
+        let d_1 = ['1', '2', '3', '4', '5', '6']
+        let d_2 = ['7', '8', '9']
+        for(var i in data) {
+            if(d_1.includes(data[i].name)){
+                var childTable = frm.add_child('dmh_1');
+                childTable.number = data[i].name   
+                childTable.item = data[i].item     
+            }
+            if(d_2.includes(data[i].name)){
+                var childTable = frm.add_child('dmh_2');
+                childTable.number = data[i].name
+                childTable.item = data[i].item     
+            }
+        }
+        frm.refresh_field('dmh_1')
+        frm.refresh_field('dmh_2')   
+    }
+}
+
+async function insertLoanApp(frm){
+    let cutoff_date = '-10-16'
+    let end_of_next_cutoff = '-11-10'
+    
+    let current_year = ((new Date(frm.doc.posting_date)).getFullYear()).toString()
+    let next_year = ((new Date(frm.doc.posting_date)).getFullYear() + 1).toString()
+
+    let release_date = current_year.concat(cutoff_date) // new Date(current_year.concat(cutoff_date))
+    let payment_start = current_year.concat(end_of_next_cutoff) //new Date(current_year.concat(end_of_next_cutoff))
+
+    // console.log('RELEASE', release_date)
+    // console.log('PAYMENT', payment_start)
+    var doc = {
+        'doctype': "Loan Application",
+        'employee': frm.doc.employee,
+        'employee_name': frm.doc.employee_name,
+        'company': frm.doc.company,
+        // sensitivity_level: sensitivity_level,
+        'loan_type': 'CMP',
+        'loan': 'Corporate Medical Plan',
+
+        'loan_amount': frm.doc.contribution * 12,
+        'amortization': frm.doc.contribution, 
+        'release_date': release_date,
+        'payment_start': payment_start, 
+        'payment_frequency': 'Both',
+        'freq_method': 'Automatic',
+
+        'remarks': frm.doc.corporate_medical_plan_package
+    };
+
+    frappe.call({
+        method: "frappe.client.insert",
+        args: {"doc": doc}, // use JSON.parse(JSON.stringify(doc)) for parsing to json object
+        callback: function(r) {
+            if(r.exc) {
+                frappe.msgprint({
+                    title: __('Error Message'),
+                    indicator: 'red',
+                    message: __("There were errors.")
+                });
+            } else {
+                frappe.msgprint({
+                    title: __('Message'),
+                    indicator: 'green',
+                    message: __("Succesfully created a loan application effective on <b>" + payment_start + "</b>. <hr> Loan Application ID: " + r.message.name)
+                });
+                frm.set_value('loan_application', r.message.name)
+                frm.save()
+            }
+        }   
+    });
+} 
+
+async function getDependents(frm){
+    if(frm.doc.employee){
+        let data = await frappe.db.get_list("Family Members", {'parent': 'Employee', filters: {'is_dependent': 1, 'parent': frm.doc.employee}, fields: ["*"], limit: 10000}); //'name': frm.doc.employee, 
+
+        // console.log(data)
+        cur_frm.clear_table("dependents")
+        for(var i in data){
+            var childTable = frm.add_child('dependents');
+            childTable.full_name = data[i].full_name
+            childTable.birthday = (data[i].birthday).toString()
+            childTable.age = await ageDifference(frm, data[i].birthday)
+            console.log(ageDifference(frm, data[i].birthday), data[i].birthday)
+            childTable.relationship = data[i].relationship
+        }
+        frm.refresh_field('dependents')
+    }
+}
+
+async function ageDifference(frm, dob){
+    var today = new Date(); 
+    var dob = new Date(dob)
+    var diffInMilliSeconds = today.getTime() - dob.getTime(); 
+    var diffInYears = diffInMilliSeconds/1000/60/60/24/365.25;
+    return Math.abs(Math.round(diffInYears));
+}
+
+function getServerTime() {
+	let date  = new Date($.ajax({async: false}).getResponseHeader( 'Date' ))
+	let formatted_date = pad(date.getFullYear(), 4) + "-" + pad(date.getMonth() + 1, 2) + "-" + pad(date.getDate(), 2)
+
+    return formatted_date;
+}
+
+//padding of number used in formatting time
+function pad(number, length) {
+    var str = '' + number;
+    while (str.length < length) {
+        str = '0' + str;
+    }
+    return str;
+}

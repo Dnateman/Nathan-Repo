@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        p{
+            font-size: 10px;
+        }
+        .tabsign {
+            display: inline-block;
+            margin-left: 100px;
+        }
+    </style>
+    
+</head>
+<body>
+    <main style="justify-content: center;">
+        <header style="width: 100%; text-align: left; margin-left: 40px;">
+            {% set company_logo = frappe.db.get_value("Company", doc.company, 'company_logo')  %}
+            <img src="{{ company_logo }}" alt="header" width="400" height="60">
+        </header>        
+        <h1 style="text-align: center; letter-spacing: 2px; text-transform: uppercase; font-weight: bolder; background-color:#e6e6e6;">quit claim</h1>
+        <div style="padding: 0 6%;">
+            <table>
+                <tr>
+                    <td style="width: 17%;">Name:</td>
+                    <td style="width: 27.5%;">{{doc.employee_name}}</td>
+                    <td style="width: 2%;"></td>
+                    <td style="width: 18%;">Date Employed: </td>
+                    <td style="width: 27.5%;">{% set datehired = frappe.db.get_value("Employee", doc.employee, 'date_hired') %}
+                    {{frappe.utils.formatdate(datehired, 'MMMM dd, yyyy')}}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Designation:</td>
+                    <td>
+                        {% if frappe.db.get_value("Employee", doc.employee, 'position_title') != none %} {{ frappe.db.get_value("Employee", doc.employee, 'position_title') }}
+                        {% else %} {% endif %}
+                    </td>
+                    <td></td>
+                    <td>Date Separated:</td>
+                    <td>
+                        {% if frappe.db.get_value("Employee", doc.employee, 'date_resigned') != none %} {{ frappe.db.get_value("Employee", doc.employee, 'date_resigned') }}
+                        {% else %} {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Department:</td>
+                    <td>
+                        {% if frappe.db.get_value("Employee", doc.employee, 'department') != none %} {{ frappe.db.get_value("Employee", doc.employee, 'department') }}
+                        {% else %} {% endif %}
+                    </td>
+                    <td></td>
+                    <td>Employment Status:</td>
+                    <td>
+                        {% if frappe.db.get_value("Employee", doc.employee, 'employment_status') != none %} {{ frappe.db.get_value("Employee", doc.employee, 'employment_status') }}
+                        {% else %} {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="5" style=" border-bottom-style: dotted;"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-transform: uppercase;">Reason for separation: </td>
+                    <td colspan="3"><!-- {% if doc.purpose == None %}{% else %}{{doc.purpose}}{% endif %} --></td>
+                </tr>
+                <tr>
+                    <td colspan="5">
+                        <table style="">
+                            <tr>
+                                <th style="text-transform: uppercase; text-align: center; letter-spacing: 2px;" colspan="3">particulars</th>
+                                <th style="text-transform: uppercase; text-align: center; width:35%;">amount</th>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="font-weight: bolder; text-transform: uppercase;">
+                                    Income
+                                </td>
+                            </tr>
+                            {% for index in doc.register_table %}
+                                {% if index.type == 'Add' %}
+                                <tr style="line-height: 0%;">
+                                
+                                    <td colspan="3" style=" margin-left:30px; border-bottom: 1px solid rgb(214, 214, 214);">{% if index.description != None %}{{index.description}}{% else %}{{index.transaction_type}}{% endif %}</td>
+                                    <td colspan="2" style="text-align: right; margin-left:30px; border-bottom: 1px solid rgb(214, 214, 214);">{{ frappe.format(index.amount, 'Currency' )}}</td>
+                                
+                                </tr>
+                            
+                                {% endif %}
+                            {% endfor %}
+                            <tr>
+                                <td colspan="2" style="font-weight: bolder; text-transform: uppercase;">
+                                    Deduction
+                                </td>
+                            </tr>
+                            {% for index in doc.register_table %}
+                                {% if index.type == 'Less' %}
+                                <tr style="line-height: 0%;">
+                                
+                                    <td colspan="3" style=" margin-left:30px; border-bottom: 1px solid rgb(214, 214, 214); ">{% if index.description != None %}{{index.description}}{% else %}{{index.transaction_type}}{% endif %}</td>
+                                    <td colspan="2" style="text-align: right; margin-left:30px; border-bottom: 1px solid rgb(214, 214, 214); ">{{ frappe.format(index.amount, 'Currency' )}}</td>
+                                
+                                </tr>
+                             
+                                {% endif %}
+                            {% endfor %}
+                            <tr>
+                                <td colspan="" >Total Amount:</td>
+                                <td colspan="3" style="text-align: center;">{{doc.amount_to_words}} <span class="tabsign"></span> {{doc.net_pay | round(2, 'ceil')}}</td>
+                            </tr>
+
+                            <tr>
+                                <td style="border-right: 10px solid white; border-bottom: 1px solid black;  width: 160px; height:50px;">
+                                    <label for="prepby">Prepared By:</label>
+                                    <p id="prepby"></p>
+                                </td>
+                                <td style="border-right: 10px solid white; border-bottom: 1px solid black; width: 160px;">
+                                    <label for="checkedby">Checked By:</label>
+                                    <p id="checkedby"></p>
+                                </td>
+                                <td style="border-right: 10px solid white; border-bottom: 1px solid black; width: 160px;">
+                                    <label for="approvedby">Approved By:</label>
+                                    <p id="approvedby"></p>
+                                </td>
+                                <td style="border-right: 10px solid white; border-bottom: 1px solid black; width:180px;">
+                                    <label for="fullpayment">Received the full payment above</label>
+                                    <p id="fullpayment"></p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="text-align:center; font-weight: bold; ">{% if doc.prepared_by == None %}{% else %}{{doc.prepared_by}}{% endif %}</td>
+                                <td style="text-align:center; font-weight: bold; ">{% if doc.checked_by == None %}{% else %}{{doc.checked_by}}{% endif %}</td>
+                                <td style="text-align:center; font-weight: bold; "><!-- {{doc.signed_by}} --></td>
+                                <td style="text-align:center; font-weight: bold; ">{% if doc.employee_name == None %}{% else %}{{doc.employee_name}}{% endif %}</td>
+                            </tr>
+                        </table>
+                    </td>
+
+                </tr>
+                <tr>
+                    <td colspan="5" style="border-bottom:2px solid black ;">
+
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="5">
+                        <h2 style="text-transform: uppercase; font-weight: bold; text-align: center;">waiver</h2>
+                        <p>NOW ALL MEN BY THIS PRESENT:</p>
+                        <p style="text-align: justify; margin-top: 6px;">That I, {{doc.employee_name}}  Filipino, of legal age and presently residing Cagayan De Oro City, after the termination of my employment with Starbright Cagayan and after having properly cleared myself of any and all accountabilities therein and received all my final salaries and do hereby release and forever discharge said Company successor and assign from any and all liabilities, claims, demands or cause of action arising out of an in the course of my employment</p>
+                        <p style="text-align: justify; margin-top: 6px;">That I have not suffered any sickness or injuries directly caused or aggravated by working during said employment for which I have been fully compensated under and by virtues of ail laws in the Philippines</p>
+                        <p style="text-align: justify; margin-top: 6px;">
+                            That I have hereby certilied that thisseparation should operate to terminate and renounce forever any ail rights and remedies I may have under the laws in the force as this date and under by virtue of my employment with Starbright Cagayan..
+                        </p>
+                        <p style="text-align: justify; margin-top: 6px;">
+                            That I further certify that I do not have in my posession any property of the company, equipment, materials records and copies thereo[
+                        </p>
+                        <p>
+                            IN THIS WITNESS WHEREOF, I have here to affixed my signature this <u><span id="day">{{doc.posting_date}}</span><sup id="ord" style="font-size: 11px"></sup></u> of <u>{{frappe.utils.formatdate(doc.posting_date,'MMMM, yyyy')}}</u>
+                        </p>
+                        <table style="line-height: 75%;">
+                            <tr>
+                                <td rowspan="7" style="border-bottom: 1px solid black;">
+                                    <label for="witness">Witness:</label>
+                                    
+                                    <p id="witness" style="margin-top: 70px;">
+                                       <!--  {% set sign = frappe.db.get_value('Electronic Signature', doc.witness_name, 'file_name') %}
+                                
+                                        <div style="position: relative; width: 100px; margin: auto; bottom:0;">
+                                            <img src="files/{{sign}}" alt="" style="width: 15%; position: fixed; bottom: 130px; right: 130px;">
+                                            <p style="text-align: center;">{% set witness_name = doc.witness_name %}
+                                            
+                                            {% if witenss_name == None %}{% else %} {{witness_name}} {% endif %}</p>
+                                        </div> -->
+
+                                    </p>
+                                </td>
+                              <!--   <td style="border-bottom: 1px solid black;"> sdlfjs;ldfgkj;sldfkjgl</td> -->
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td style="width: 300px;"></td>
+                              
+                                <td style="text-align: center;"></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                
+                                <td style="border-bottom: 1px solid black; text-align: center; position: relative;">
+                                    {% set sign = frappe.db.get_value('Electronic Signature', doc.employee_name, 'file_name') %}
+                                
+                                    <div style="position: relative; width: 100px; margin: auto;">
+                                        <!-- img src="files/{{sign}}" alt="" style="width: 15%; position: fixed; bottom: 200px; right: 130px;"> -->
+                                        <p style="text-align: center;">{{doc.employee_name}}</p>
+                                    </div>
+                                </td>    
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                               
+                                <td>Signature over printed name</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                               
+                                <td style="text-align: center;" ></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                              
+                                <td style="text-align: center;"></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                
+                                <td style="border-bottom: 1px solid black;"></td>
+                            </tr>
+                            <tr>
+                                <td>Signature over printed name</td>
+                                <td></td>
+                                <td></td>
+                                
+                                
+                                <td>Signature over printed name</td>
+                            </tr>
+                            
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            <hr>
+        </div>
+
+
+
+    </main>
+
+    <script type="text/javascript">
+        // Function to get the ordinal suffix for a given day
+function getOrdinalSuffix(day) {
+    if (day === 1 || day === 21 || day === 31) return "st";
+    if (day === 2 || day === 22) return "nd";
+    if (day === 3 || day === 23) return "rd";
+    return "th";
+}
+
+// Function to format the date
+function formatDate(dateString) {
+    var date = new Date(dateString);
+    var day = date.getDate();
+    var month = date.getMonth();
+    var year = date.getFullYear();
+    var suffix = getOrdinalSuffix(day);
+
+    return {
+        day: day,
+        month: month,
+        year: year,
+        suffix: suffix,
+        monthName: months[month]
+    };
+}
+
+// Constants
+var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+// Get the date string from the HTML
+var dateString = document.getElementById('day').innerHTML;
+
+// Format the date
+var formattedDate = formatDate(dateString);
+
+// Update the HTML elements
+document.getElementById('day').innerHTML = formattedDate.day;
+document.getElementById('ord').innerHTML = formattedDate.suffix;
+document.getElementById('mon').innerHTML = formattedDate.monthName + " " + formattedDate.year;
+
+console.log(formattedDate.day);
+
+    </script>
+</body>
+</html>

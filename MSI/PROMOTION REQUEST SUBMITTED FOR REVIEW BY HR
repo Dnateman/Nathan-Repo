@@ -1,0 +1,100 @@
+<head>
+
+</head>
+  <body>
+      <main>
+          <div class="letter-a" style="padding:30px;">
+
+              <p style="font-size: 17px;"><b>Hello, HR Team and Admin Manager!</b></p>
+              <p style="font-size: 17px;">You have a new Movement Request for review with the following details</p>
+  
+              <h3 style="font-size: 26px; color: rgb(25, 73, 114);">Type of Movement: Promotion</h3>
+              <div style="justify-content: center;">
+                  <div style="margin-right: 10px;" >
+                      <table>
+                          <tr>
+                              <td style="width:500px; padding:  1% 1%;"> Email Address</td>
+                              <td style="width:500px;"><a href="#" target="_blank">{{doc.owner}}</td>
+                          </tr>
+                          <tr>
+                              <td colspan="2" style="background-color: rgb(201, 201, 201); width:150px; padding: 1% 1%;"><b> Manager/Team Lead Request</b></td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>ID number of employee you are requsting movement for:</b></td>
+                              <td>{{doc.employee}}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>Full name of employee you are requsting movement for:</b></td>
+                              <td>{{doc.employee_name}}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>What is the employee's current line of business (LOB)?</b></td>
+                              <td>{{doc.line_of_business}}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>What is the employee's current team?</b></td>
+                              <td>{{frappe.db.get_value('Employee', doc.employee, 'department')}}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>What is the employee's current position?</b></td>
+                              <td>{{doc.current_position}}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>Name of Requesting Manager/Lead</b></td>
+                              <td>{{frappe.db.get_value('Employee', doc.employee, 'reports_to_name')}}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>Proposed effective date of changes</b></td>
+                              <td>{{doc.effective_on}}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>What movement are you requesting?</b></td>
+                              <td>{% if doc.new_job_level != None %}{{doc.new_job_level}}{% endif %}</td>
+                          </tr>
+                      </table>
+                  </div>
+                  <div style="margin-left: 10px;">
+                      <table>
+                          <tr>
+                              <td colspan="2"  style="background-color: rgb(201, 201, 201); width:250px; padding: 1% 1%;"><b> Promotion + Increase </b></td>
+                          </tr>
+                          <tr>
+                              <td style="width:500px; padding:  1% 1%;"><b>What is the proposed new position?<b></td>
+                              <td>{% if doc.new_position != None %}{{doc.new_position}}{% endif %}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>What is the proposed new team?</b></td>
+                              <td>{% if doc.new_line_of_business != None %}{{doc.new_line_of_business}}{% endif %}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>What is the proposed new LOB? (Choose NA if not applicable)</b></td>
+                              <td>{% if doc.new_line_of_business != None %}{{doc.new_line_of_business}}{% endif %}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>Please provide a summary of what is this person will be doing for the team with the new role.</b></td>
+                              <td>{% if doc.qthree != None %}{{doc.qthree}}{% endif %}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>What is the new new job rank of the employee in terms of the new role?</b></td>
+                              <td>{% if doc.new_job_level != None %}{{doc.new_job_level}}{% endif %}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>What is the justification for the score you just gave?</b></td>
+                              <td>{% if doc.qseven != None %}{{doc.qseven}}{% endif %}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>Please provide the employee's monthly KPI score (or Evaluation score, if under structured training for the position) for the past 6 months. You may answer with a url to the drive where we can find your evaulations. </b></td>
+                              <td>{% if doc.qeight != None %}{{doc.qeight}}{% endif %}</td>
+                          </tr>
+                          <tr>
+                              <td style="padding:  1% 1%;"><b>Who among the team members will be reporting to this person once movement is finalized?</b></td>
+                              <td>{% if doc.qnine %}{{doc.qnine}}{% endif %}</td>
+                          </tr>
+                          <tr></tr>
+                          <tr></tr>
+                      </table>
+                  </div>
+              </div>
+          </div>
+      </main>
+  </body>

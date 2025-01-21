@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            font-family: Arial, Helvetica, sans-serif;
+        }
+       
+        .top img, .bot img{
+            
+            width:950px ;
+        }
+          .bot img{
+            position:fixed;
+            bottom:0px;
+        }
+        hr{
+          width: 650px;
+            border: none;
+            height: 3px;
+            background: black;
+        }
+        
+        .heading{
+            font-weight: bolder;
+            margin-top: 2%;
+            color: rgb(134, 133, 241);
+            text-align: center;
+        }
+        table{
+            margin:17px auto;
+        }
+        table,td{
+            height: 20px;
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        .td-two{
+            width: 1000px;
+        }
+        .td-one{
+            width: 120px;
+        }
+        li{
+            list-style-type: none;
+        }
+        .case{
+            display: flex;
+            justify-content: space-between;
+        }
+        .following-items{
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        .following-items img{
+            border:2px solid black;
+            width: 600px;
+        }
+        .case,.content-one,.content-two{
+            margin: auto 90px;
+        }
+        p{
+            text-align: justify;
+            font-size: 15px;
+        }
+        .sign{
+            position: relative;
+            bottom: 80px;
+            left:120px;
+            margin:85px;
+            float: right;
+        }
+        .signature{
+            margin-left: 20px;
+        }
+        .signature img{
+            width: 160px;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="container-rto">
+        <div class="top">
+            <img src="https://res.cloudinary.com/dfa1bz6nk/image/upload/v1672969042/top_tbiegf.png" alt="top">
+        </div>
+        <h1 class="heading">SHOW CAUSE MEMO</h1>
+        <div class="case">
+            <p></p>
+            <p>Case No. {{doc.name}}</p>
+        </div>
+        <div class="content-one">
+                <p>
+                Employee Name: 	  {{ doc.employee_name}}   
+                     <br>
+                ID NO: {{ doc.employee }}
+                <br>
+                Line of Business:	{{frappe.db.get_value("Employee", doc.employee, 'line_of_business')}}</p>
+                <p>From	:	Human Resources Department</p>
+                <p>Date	:	{{frappe.db.get_value("Incident Report", doc.incident_report, 'date_time_offense')}}</p>
+                <p>Re	:	{{frappe.db.get_value("Incident Report", doc.incident_report, 'offense')}}</p>
+        </div>
+        <hr/>
+        <div class="content-two">
+            <p>This Show Cause Memo is issued to you as first notice  for a possible breach of Company Policy, as provided in the Employee Handbook, concerning the following offenses:</p>
+            <table>
+                {% set data = frappe.db.get_list('Offense', fields=['*']) %}
+                <tr>
+                    <td class="td-one">&nbsp;&nbsp;&nbsp;{% if doc.incident_report == frappe.db.get_value("Incident Report", doc.incident_report, 'name')%}{{frappe.db.get_value("Incident Report", doc.incident_report, 'offense')}}{% endif %}</td>
+                    <td class="td-two">&nbsp;&nbsp;&nbsp;{% if doc.incident_report == frappe.db.get_value("Incident Report", doc.incident_report, 'name')%} {% for item in data %} {% if frappe.db.get_value("Incident Report", doc.incident_report, 'offense') == item.name %} {{ item.description}} {% endif %} {% endfor %} {% endif %}</td>
+                    
+                </tr>
+            </table>
+            <p>
+                The offense/s may warrant a <b>{% if doc.incident_report == frappe.db.get_value("Incident Report", doc.incident_report, 'name')%}{{frappe.db.get_value("Incident Report", doc.incident_report, 'offense')}}{% endif %}. </b><br><br>
+                With this, you are directed to submit to Human Resources within five (5) days from receipt of this notice your written explanation why no disciplinary sanction should be given to you. 
+                <br><br>
+                Be reminded that failure to submit your written explanation within the period mentioned above shall be deemed a waiver on your part and your case shall be decided on the basis of available evidence.
+                
+                <br>
+                For compliance.
+            </p>
+                <br>
+                <p><b>Sincerely,</b></p>
+
+                <br>
+            <br>
+            <div class="signature">
+                <img src="https://res.cloudinary.com/dfa1bz6nk/image/upload/v1672974738/pirma_zsyxvv.png" alt="Signature">
+            </div>
+            <p>
+                <b>KIRSTY MAE V. SUANA</b>
+                <br>
+                <b>HR MANAGER</b>
+            </p>
+            <br>
+            <p><b>HR HANDLER: <span style="color: red; text-decoration: none; font-weight: bold;">{{doc.hr_handler}}</span></b></p>
+            <br>
+            <div class="sign">
+                <p></p>
+                <p>Received by: _______________________ <br>
+                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Signature over Printed Name
+                    <br>
+                    Date received : ____________________
+                    </p>
+            </div>
+            
+                    {%- if doc.first_attachment or doc.second_attachment or doc.third_attachment or doc.fourth_attachment or doc.fifth_attachment -%}
+                    <label style="text-align: center; margin-top: 1000px;">Photo Attachment</label>
+                    {%- else -%}
+                    {%- endif -%}
+                    <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+                        {%- if doc.first_attachment  -%}
+                            <img src="{{doc.first_attachment}}" alt="First Attachment" style="width:500px; border: 1px solid gray; margin:2px;" >
+                        {%- else -%}
+                           
+                        {%- endif -%}
+                        
+                        {%- if doc.second_attachment  -%}
+                            <img src="{{doc.second_attachment}}" alt="First Attachment" style="width:500px; border: 1px solid gray; margin:2px;" >
+                        {%- else -%}
+                           
+                        {%- endif -%}
+                        
+                        {%- if doc.third_attachment  -%}
+                            <img src="{{doc.third_attachment}}" alt="First Attachment" style="width:500px; border: 1px solid gray; margin:2px;" >
+                        {%- else -%}
+                           
+                        {%- endif -%}
+
+                        {%- if doc.fourth_attachment  -%}
+                            <img src="{{doc.fourth_attachment}}" alt="First Attachment" style="width:500px; border: 1px solid gray; margin:2px;" >
+                        {%- else -%}
+                           
+                        {%- endif -%}
+
+                        {%- if doc.fifth_attachment  -%}
+                            <img src="{{doc.fifth_attachment}}" alt="First Attachment" style="width:500px; border: 1px solid gray; margin:2px;" >
+                        {%- else -%}
+                           
+                        {%- endif -%}
+                    </div>
+
+        </div>
+       
+        <div class="bot">
+            <br><br><br>
+            <img src="https://res.cloudinary.com/dfa1bz6nk/image/upload/v1672970208/bot_xp7bpv.png" alt="bottom">
+        </div>
+        </div>
+    </main>
+</body>
+</html>

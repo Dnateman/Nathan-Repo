@@ -1,0 +1,22 @@
+frappe.ui.form.on('Regularization', {
+	refresh(frm) {
+        hideHRInput(frm);
+       $('.fa.fa-print').hide()
+	},
+    before_load(frm) {
+        hideHRInput(frm);
+    },
+    onload(frm) {
+        hideHRInput(frm);
+    }
+});
+
+//Hide HR Input if role does not include HR Staff
+function hideHRInput(frm){
+    let cur_user = frappe.session.user;
+    let roles = frappe.user_roles;
+    if(!roles.includes('HR Staff') && cur_user != 'Administrator' ){//
+        cur_frm.set_df_property("section_break_9", "hidden", 1);
+        cur_frm.set_df_property("section_break_15", "hidden", 1);
+    } 
+}

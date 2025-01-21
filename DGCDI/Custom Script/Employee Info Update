@@ -1,0 +1,228 @@
+//Deployed By Janella on 202200608
+frappe.ui.form.on('Employee Info Update', {
+    on_submit(frm){
+        getNewFields(frm);
+    },
+    after_cancel(frm){
+        getCurFields(frm);
+    },
+    employee(frm) {
+        loadCurOnNew(frm);
+    },
+    async before_save(frm) {
+        await saveToDependentsTable(frm)
+    },
+    before_workflow_action: async function(frm) {
+      if(frm.selected_workflow_action == 'Approve') { await automateDependents(frm) } 
+      else if (frm.selected_workflow_action == 'Cancel') { await revertDependents(frm) }
+    }
+  });
+  
+  //get Employee Details
+  async function get_EmpDet(frm,name){
+    return new Promise(resolve => {
+      let _empDet = [];
+      let emp_filters = {"name": name};
+      let emp_fields  = ["name", "full_name", "birthday","gender", "civil_status","blood_type"
+                        , "is_solo_parent", "is_widowed", "profile_picture"]
+      let emp_data = frappe.db.get_list("Employee",{filters: emp_filters, fields: emp_fields, limit: 100});
+      var emp_type = typeof emp_data;
+      if(emp_type != 'undefined') {
+        _empDet = emp_data;
+      }
+      resolve(_empDet);
+    });
+  }
+  
+  //Update data in New fields for Select and Date data type
+  async function loadCurOnNew(frm){
+    let _emp_details = await get_EmpDet(frm, frm.doc.employee);
+    //General Info
+    //frm.set_value("new_gender", _emp_details[0].gender);
+    //frm.set_value("new_birthday", _emp_details[0].birthday);
+    frm.set_value("current_profile_picture", _emp_details[0].profile_picture);
+    frm.set_value("new_profile_picture", _emp_details[0].profile_picture);
+    //frm.set_value("new_is_vaccinated", _emp_details[0].is_vaccinated);
+    //Personal Info
+    //frm.set_value("new_blood_type", _emp_details[0].blood_type);
+    //frm.set_value("new_civil_status", _emp_details[0].civil_status);
+    frm.set_value("new_is_solo_parent", _emp_details[0].is_solo_parent);
+    frm.set_value("new_is_widowed", _emp_details[0].is_widowed);
+  }
+  
+//Get the New Data to Update in 201 trigger by submit
+async function getNewFields(frm) {
+    let docs = {"doctype": "Employee",  "docname": frm.doc.employee };
+    let up = [];
+    $.each(frm.fields_dict, async function(i,row) {
+        let type = typeof row.df.depends_on;
+        let fieldname = row.df.fieldname;
+        if(row.df.hidden_due_to_dependency != true && row.df.fieldtype != 'Section Break' && fieldname.startsWith("new_")) {
+            let emp_fieldname = row.df.fieldname.replace("new_","");
+            let cur_fieldname = row.df.fieldname.replace("new_","current_");
+            if(frm.doc[cur_fieldname] != row.value){
+              //console.log(emp_fieldname, ": ", row.df.fieldname);
+              //console.log("Current: ", frm.doc[cur_fieldname], " New: ", row.value);
+              docs[emp_fieldname] = row.value;
+            }
+        }
+    });
+    up.push(docs)
+    //console.log("UPDATE: ", up);
+    await updateField(frm, up);
+}
+  
+ //Get the Current Data to Update in 201 trigger by cancellation
+async function getCurFields(frm) {
+    let docs = {"doctype": "Employee",  "docname": frm.doc.employee };
+    let up = [];
+    $.each(frm.fields_dict, async function(i,row) {
+        let type = typeof row.df.depends_on;
+        let fieldname = row.df.fieldname;
+        if(row.df.hidden_due_to_dependency != true && row.df.fieldtype != 'Section Break' && fieldname.startsWith("current_")) {
+            let emp_fieldname = row.df.fieldname.replace("current_","");
+            let cur_fieldname = row.df.fieldname.replace("current_","new_");
+            if(frm.doc[cur_fieldname] != row.value){
+              //console.log(emp_fieldname, ": ", row.df.fieldname);
+              //console.log("Current: ", frm.doc[cur_fieldname], " New: ", row.value);
+              docs[emp_fieldname] = row.value;
+            }
+        }
+    });
+    up.push(docs)
+    //console.log("UPDATE: ", up);
+    await updateField(frm, up);
+  }
+  
+  //Update data in 201
+  function updateField(frm, update) {
+      frappe.call({
+        method: "frappe.client.bulk_update",
+        args: {"docs": update},
+        async: false
+      })
+  } 
+
+// AUTOMATE DEPENDENTS FUNCTION
+async function automateDependents(frm) {
+  if(frm.doc.item_type == 'Dependents') {
+    let formDependents = await getFormDependents(frm)
+        await deleteEmployeeDependents(frm)
+        await postData(frm, formDependents)
+  }
+}
+
+// REVERT AUTOMATION
+async function revertDependents(frm) {
+  if(frm.doc.item_type == 'Dependents') {
+    let formDependents = await getFormSaveDependents(frm)
+        await deleteEmployeeDependents(frm)
+        await postData(frm, formDependents)
+  }
+}
+
+// GET DATA FROM DEPENDENTS TABLE IN FORM, TO POST TO EMPLOYEE 201
+async function getFormDependents(frm) {
+  let data = []
+  let dsTable = frm.doc.dependents_table
+      for(let x = 0; x < dsTable.length; x++) {
+          let doc = {
+            'doctype': 'Family Members',
+            'full_name': dsTable[x].full_name,
+            'birthday': dsTable[x].birthday,
+            'relationship': dsTable[x].relationship,
+            'fm_contact': dsTable[x].fm_contact,
+            'is_dependent': dsTable[x].is_dependent,
+            'is_pwd': dsTable[x].is_pwd,
+            'adult': dsTable[x].adult,
+            'is_qualified_dependent': dsTable[x].is_qualified_dependent,
+            'parent': frm.doc.employee,
+            'parenttype': 'Employee',
+            'parentfield': 'family_members',
+            }
+          data.push(doc)
+      }
+  return data
+}
+
+// GET DATA FROM DEPENDENTS SAVE TABLE IN FORM, TO POST TO EMPLOYEE 201
+async function getFormSaveDependents(frm) {
+  let data = []
+  let dsTable = frm.doc.dependents_save_table
+      for(let x = 0; x < dsTable.length; x++) {
+          let doc = {
+            'doctype': 'Family Members',
+            'full_name': dsTable[x].full_name,
+            'birthday': dsTable[x].birthday,
+            'relationship': dsTable[x].relationship,
+            'fm_contact': dsTable[x].fm_contact,
+            'is_dependent': dsTable[x].is_dependent,
+            'is_pwd': dsTable[x].is_pwd,
+            'adult': dsTable[x].adult,
+            'is_qualified_dependent': dsTable[x].is_qualified_dependent,
+            'parent': frm.doc.employee,
+            'parenttype': 'Employee',
+            'parentfield': 'family_members',
+          }
+          data.push(doc)
+      }
+  return data
+}
+
+// GET EMPLOYEE'S CURRENT DEPENDENTS
+async function getEmployeeDependents(frm) {
+  let empFilters = {'parent': frm.doc.employee}
+  let emp_data = await frappe.db.get_list("Family Members", {filters:empFilters, fields:['*'], parent:'Employee', limit: 1000})
+
+      /* Console Viewing */
+          console.log("Employee Dependents: ", emp_data)
+
+  return emp_data
+}
+
+// TRANSFER CURRENT DEPENDENTS TO SAVE TALBE
+async function saveToDependentsTable(frm) {
+  let cur_dependents = await getEmployeeDependents(frm)
+      if(cur_dependents != null) {
+          $.each(cur_dependents, function(i,row) {
+            frm.add_child('dependents_save_table', {
+              full_name: row.full_name,
+              birthday: row.birthday,
+              relationship: row.relationship,
+              fm_contact: row.fm_contact,
+              is_dependent: row.is_dependent,
+              is_pwd: row.is_pwd,
+              adult: row.adult,
+              is_qualified_dependent: row.is_qualified_dependent,
+            })
+        })
+        frm.refresh_fields('dependents_save_table')
+      }
+}
+
+// DELETE DATA OF EMPLOYEE ON FAMILY MEMBERS DOCTYPE
+async function deleteEmployeeDependents(frm) {
+  let cur_dependents = await getEmployeeDependents(frm)
+      if(cur_dependents != null) {
+          $.each(cur_dependents, function(i,row) {
+              frappe.call ({
+                method: "frappe.client.delete",
+                args: {
+                    doctype: 'Family Members',
+                    name: row.name,
+                    ignore_missing: false
+                },
+                callback: function(response) { console.log("Document Updated: ", response.message) }
+              })
+          })
+      }
+}
+
+// POST DATA FUNCTION
+async function postData(frm, document) {
+  frappe.call({
+    method: "frappe.client.insert_many",
+    args: {"docs": document},
+    callback: function(response) { console.log("Document Updated: ", response.message) }
+  })
+}

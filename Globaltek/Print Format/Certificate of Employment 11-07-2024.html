@@ -1,0 +1,37 @@
+<div class="col-xs-8" style="width: 100em; height: auto; padding: 100px 0 0 100px;">
+    <img src="https://hris.globaltekbpo.com/private/files/globalteklogo(2).png" style="float: left; margin-right: 10px;">
+    <h1 style = ' margin-top: 0;'>
+    <em style='font-size: 12pt; font-family: "Calibri", "serif"; color: blue !important; line-height: .5;'>
+        Sam Bldg., H. Concepcion,<br>
+        Maharlika Highway, Cabanatuan City,<br>
+        Nueva Ecija, 3100 www.globaltekbpo.com
+    </em>
+</h1> <br> <br> <br>
+    <p style='font-size:22px;font-family:"Calibri","sans-serif"; text-align:right; padding-right:120px;'> <strong>{{frappe.utils.formatdate(doc.posting_date,'MMMM dd, yyyy') }} <strong></p>
+<br><br>
+<p style='font-size: 30px; font-family: "Calibri", "sans-serif"; text-align: center; background-color: #4B77BE !important; color: white !important; width: 90%;'>
+    <strong style="color: white !important;">CERTIFICATE OF EMPLOYMENT</strong>
+</p> 
+
+<p style='font-size:22px;font-family:"Calibri","sans-serif";text-align:justify; padding-top:30px;'><strong>To Whom It May Concern,</strong></p><br>
+<div style="margin-right:120px; ">
+<p style='font-size:22px;font-family:"Calibri","sans-serif";text-align:justify; font-weight:normal;'>This is to certify that <strong>{% if frappe.db.get_value("Employee", doc.employee, "gender") == 'Female' -%}Ms.{% else %}Mr.{%- endif %} {{frappe.db.get_value("Employee", doc.employee, "first_name")}} {{frappe.db.get_value("Employee", doc.employee, "last_name")}}</strong> is an employee of {% set company_name = frappe.db.get_value("Employee", doc.employee, "company") %}
+{{ "GlobalTek BPO Inc" if company_name == "Globaltek Philippines Corporation" else company_name }}. as a {{frappe.db.get_value("Employee", doc.employee, "position_title")}} from <strong>{{frappe.utils.formatdate(doc.from_date,'MMMM dd, yyyy') }}</strong>, up to present with a monthly gross income of PHP {{ frappe.format(doc.monthly_salary_package, 'Currency') }} </p>
+<br> <br> <br>
+<p style='font-size:22px;font-family:"Calibri","sans-serif";text-align:justify; font-weight:normal;'><strong>{% set company_name = frappe.db.get_value("Employee", doc.employee, "company") %}
+{{ "GlobalTek BPO Inc" if company_name == "Globaltek Philippines Corporation" else company_name }}</strong>. is a BPO category 3 type of industry with a Principal Office at Corner Julia Vargas AVE San Antonio, City of Pasig, NCR, and 3 Operation Sites at BRR Business Center, BRR Business Hub, and Sam Building, located at Cabanatuan City, Nueva Ecija.</p> <br> <br> <br>
+<p style='font-size:22px;font-family:"Calibri","sans-serif";text-align:justify;'>This certification is issued as requested by the above-named person for whatever legal purposes it may serve.</p>
+<br><br><br>
+<p style='font-size:22px;font-family:"Calibri","sans-serif";text-align:justify; font-weight:normal;'>Should you need further clarification, you may reach us at <strong>{{ frappe.db.get_value("Company", frappe.db.get_value("Employee", doc.employee, "company"), "email") }}.</strong></p>
+</div> <br><br><br><br><br><br><br>
+
+<div style="width: 48%; float: left;">
+    <p style='margin: 0in; font-size: 22px; font-family: "Calibri", "sans-serif"; text-align: left; text-decoration:overline;'>
+        <strong>PAULEEN LARA LIWAG, RPm</strong>
+    </p>
+    <p style='font-size: 17px; font-family: "Calibri", "sans-serif"; text-align: left;'>
+        <strong>Senior HR Manager</strong>                                                     
+    </p>
+</div> <br><br><br><br><br><br> <br><br><br><br><br><br><br><br><br><br><br><br>
+<p style = "font-size: 15px; color: #808080 !important; text-align:center; margin-right:60px;">This is a system generated Certificate of Employment. Original signature and company seal is not required </p>
+

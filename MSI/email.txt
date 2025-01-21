@@ -1,0 +1,37 @@
+1
+dauellc@meditab.com,relationshr@meditab.com,direc.baldwin@gmail.com
+
+
+2
+dauellc@meditab.com,relations@meditab.com,direc.baldwin@gmail.com
+3
+direc.wren@gmail.com,direc.baldwin@gmail.com
+
+Salary Adj
+1.
+relationshr@meditab.com,dauellc@meditab.com,direc.baldwin@gmail.com
+
+direc.wren@gmail.com,direc.baldwin@gmail.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+disbursementsphil@meditab.com,reports@drcatalyst.com,workforcemgmt@drcatalyst.com,admincebu@medspecialized.com,palp@ertech.io,lmcenter@meditab.com,iam@ertech.io,cebuasset@ertech.io,direc.baldwin@gmail.com 
+doc.line_of_business == "DrCatalyst"
+
+
+
+disbursementsphil@meditab.com,workforcemgmt@drcatalyst.com,admincebu@medspecialized.com,palp@ertech.io,lmcenter@meditab.com,iam@ertech.io,cebuasset@ertech.io,direc.baldwin@gmail.com 
+doc.line_of_business != "DrCatalyst"

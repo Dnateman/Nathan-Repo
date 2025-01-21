@@ -1,0 +1,35 @@
+frappe.ui.form.on("Certificate of Employment", {
+    validate: async function(frm) {
+        // Optional: Any validation logic can go here
+    },
+    onload(frm) {
+        getdata_from_employee_childtable(frm);
+    }
+});
+
+async function getdata_from_employee_childtable(frm) {                                      
+    const employee_name = frm.doc.employee; // Get the selected employee from the current document
+
+    if (!employee_name) {
+        return;
+    }
+
+    const fields = ['*'];
+    const filters = { "parent": employee_name }; // Filter by the employee's name in the child table
+    const data = await frappe.db.get_list("Other Compensation and Benefits Table", {
+        fields: fields,
+        filters: filters,
+        limit: 1000000
+    });
+
+    frm.clear_table("other_compensation_and_benefits_table");
+
+    data.forEach(entry => {
+        let new_row = frm.add_child("other_compensation_and_benefits_table");
+        new_row.transaction_type = entry.transaction_type; 
+        new_row.amount = entry.amount; 
+        new_row.is_active = entry.is_active; 
+    });
+
+    frm.refresh_field("other_compensation_and_benefits_table");
+}
